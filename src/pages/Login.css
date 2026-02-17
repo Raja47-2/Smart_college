@@ -1,0 +1,159 @@
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: var(--background-color);
+}
+
+.login-form {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+}
+
+.login-form h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: var(--primary-color);
+}
+
+.error {
+    color: #ef4444;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.btn-primary {
+    width: 100%;
+}
+
+/* Role Selection Styles */
+.role-selection-container {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 800px;
+    text-align: center;
+}
+
+.role-cards {
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    gap: 2rem;
+    margin-top: 2rem;
+    flex-wrap: nowrap;
+    /* Force single line */
+}
+
+.role-card {
+    background: #fff;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.role-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.role-icon {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 0.5rem;
+}
+
+.role-card h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+/* Distinct Card Styles */
+.role-card.student {
+    border-color: #3b82f6;
+}
+
+.role-card.student:hover {
+    background-color: #eff6ff;
+}
+
+.role-card.student .role-icon {
+    color: #3b82f6;
+}
+
+.role-card.faculty {
+    border-color: #10b981;
+}
+
+.role-card.faculty:hover {
+    background-color: #ecfdf5;
+}
+
+.role-card.faculty .role-icon {
+    color: #10b981;
+}
+
+.role-card.admin {
+    border-color: #f59e0b;
+}
+
+.role-card.admin:hover {
+    background-color: #fffbeb;
+}
+
+.role-card.admin .role-icon {
+    color: #f59e0b;
+}
+
+.back-btn {
+    background: none;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0;
+    font-weight: 500;
+}
+
+.back-btn:hover {
+    color: var(--primary-color);
+    text-decoration: underline;
+}

@@ -1,0 +1,89 @@
+/* Reusing basic structure from other pages */
+.page-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.date-picker-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: var(--card-background);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--border-color);
+}
+
+.date-input {
+    border: none;
+    font-family: inherit;
+    color: var(--text-primary);
+    outline: none;
+}
+
+.attendance-container {
+    background-color: var(--card-background);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding-bottom: 1.5rem;
+}
+
+.status-toggles {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.status-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--radius);
+    font-size: 0.8rem;
+    font-weight: 500;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    transition: all 0.2s;
+}
+
+.status-btn.present.active {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: var(--success-color);
+    border-color: var(--success-color);
+}
+
+.status-btn.absent.active {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--danger-color);
+    border-color: var(--danger-color);
+}
+
+.save-container {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    align-items: center;
+    margin-top: 1.5rem;
+    padding: 0 1.5rem;
+}
+
+.success-message {
+    color: var(--success-color);
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+.empty-state {
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-secondary);
+    background: var(--card-background);
+    border-radius: var(--radius);
+}

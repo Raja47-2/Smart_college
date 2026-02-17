@@ -1,0 +1,67 @@
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Layout from './components/Layout';
+import Dashboard from './pages/Dashboard';
+
+import Students from './pages/Students';
+import StudentForm from './pages/StudentForm';
+
+import Faculty from './pages/Faculty';
+import FacultyForm from './pages/FacultyForm';
+
+import Attendance from './pages/Attendance';
+
+// Placeholder components for other modules until implemented
+import Fees from './pages/Fees';
+import FeeForm from './pages/FeeForm';
+import StudentDashboard from './pages/StudentDashboard';
+import TeacherDashboard from './pages/TeacherDashboard';
+import Assignments from './pages/Assignments';
+import AssignmentForm from './pages/AssignmentForm';
+import Notifications from './pages/Notifications';
+import Analytics from './pages/Analytics';
+
+import { AuthProvider } from './context/AuthContext';
+import Login from './pages/Login';
+import ProtectedRoute from './components/ProtectedRoute';
+
+function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+
+          <Route path="/" element={
+            <ProtectedRoute>
+              <Layout />
+            </ProtectedRoute>
+          }>
+            <Route index element={<Dashboard />} />
+            <Route path="student-dashboard" element={<StudentDashboard />} />
+            <Route path="teacher-dashboard" element={<TeacherDashboard />} />
+            <Route path="students" element={<Students />} />
+            <Route path="students/add" element={<StudentForm />} />
+            <Route path="students/edit/:id" element={<StudentForm />} />
+            <Route path="faculty" element={<Faculty />} />
+            <Route path="faculty/add" element={<FacultyForm />} />
+            <Route path="faculty/edit/:id" element={<FacultyForm />} />
+            <Route path="attendance" element={<Attendance />} />
+            <Route path="fees" element={<Fees />} />
+            <Route path="fees/add" element={<FeeForm />} />
+            <Route path="fees" element={<Fees />} />
+            <Route path="fees/add" element={<FeeForm />} />
+            <Route path="fees/edit/:id" element={<FeeForm />} />
+            <Route path="assignments" element={<Assignments />} />
+            <Route path="assignments/add" element={<AssignmentForm />} />
+            <Route path="notifications" element={<Notifications />} />
+            <Route path="analytics" element={<Analytics />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
+  );
+}
+
+export default App;

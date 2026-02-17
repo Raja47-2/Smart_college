@@ -74,6 +74,7 @@ const Faculty = () => {
                     <table className="data-table">
                         <thead>
                             <tr>
+                                <th>Registration No</th>
                                 <th>Name</th>
                                 <th>Email</th>
                                 <th>Department</th>
@@ -84,6 +85,7 @@ const Faculty = () => {
                         <tbody>
                             {filteredFaculty.map((item) => (
                                 <tr key={item.id}>
+                                    <td>{item.registration_no}</td>
                                     <td>{item.name}</td>
                                     <td>{item.email}</td>
                                     <td>{item.department}</td>

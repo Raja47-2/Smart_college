@@ -13,6 +13,7 @@ const FacultyForm = () => {
         email: '',
         department: '',
         designation: '',
+        registration_no: '',
         password: '' // Only for new faculty
     });
 
@@ -79,6 +80,19 @@ const FacultyForm = () => {
                             onChange={handleChange}
                             required
                             placeholder="e.g. sarah@college.edu"
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label htmlFor="registration_no">Registration Number</label>
+                        <input
+                            type="text"
+                            id="registration_no"
+                            name="registration_no"
+                            value={formData.registration_no}
+                            onChange={handleChange}
+                            required
+                            placeholder="e.g. FAC-2024-001"
                         />
                     </div>
 

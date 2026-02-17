@@ -57,9 +57,9 @@ const Login = () => {
                             <User className="role-icon" />
                             <h3>Faculty</h3>
                         </div>
-                        <div className="role-card admin" onClick={() => setSelectedRole('Devloper')}>
+                        <div className="role-card admin" onClick={() => setSelectedRole('admin')}>
                             <Shield className="role-icon" />
-                            <h3>Devloper</h3>
+                            <h3>Admin</h3>
                         </div>
                     </div>
                 </div>
@@ -78,7 +78,7 @@ const Login = () => {
                 }}>
                     <ArrowLeft size={16} /> Back to Roles
                 </button>
-                <h2>{selectedRole === 'student' ? 'Student' : (selectedRole === 'teacher' ? 'Faculty' : 'Developer')} Login</h2>
+                <h2>{selectedRole === 'student' ? 'Student' : (selectedRole === 'teacher' ? 'Faculty' : 'Admin')} Login</h2>
                 {error && <p className="error">{error}</p>}
                 <div className="form-group">
                     <label>{selectedRole === 'student' ? 'Registration No' : 'Email'}</label>

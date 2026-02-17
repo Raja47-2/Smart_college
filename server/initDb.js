@@ -39,6 +39,7 @@ const createTables = () => {
       email TEXT NOT NULL,
       department TEXT,
       designation TEXT,
+      registration_no TEXT UNIQUE,
       FOREIGN KEY(user_id) REFERENCES users(id)
     )`);
 

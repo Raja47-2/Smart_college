@@ -43,7 +43,7 @@ const Assignments = () => {
         <div className="page-container">
             <div className="page-header">
                 <h1>Assignments</h1>
-                {(user.role === 'teacher' || user.role === 'admin') && (
+                {(user?.role === 'teacher' || user?.role === 'admin') && (
                     <Link to="/assignments/add" className="btn btn-primary">
                         <Plus size={18} />
                         Create Assignment
@@ -73,7 +73,7 @@ const Assignments = () => {
                                         <BookOpen size={16} /> {assign.teacher_name}
                                     </span>
                                 </div>
-                                {user.role === 'student' && (
+                                {user?.role === 'student' && (
                                     <button
                                         onClick={() => handleSubmit(assign.id)}
                                         className="btn btn-secondary btn-sm"
@@ -81,7 +81,7 @@ const Assignments = () => {
                                         <Upload size={16} /> Submit
                                     </button>
                                 )}
-                                {(user.role === 'teacher' || user.role === 'admin') && (
+                                {(user?.role === 'teacher' || user?.role === 'admin') && (
                                     <Link to={`/assignments/${assign.id}/submissions`} className="btn btn-secondary btn-sm">
                                         View Submissions
                                     </Link>

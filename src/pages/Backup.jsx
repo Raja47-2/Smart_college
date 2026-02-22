@@ -9,7 +9,7 @@ const Backup = () => {
     const handleBackup = async () => {
         setStatus('downloading');
         try {
-            const res = await fetch('http://localhost:5000/api/backup', {
+            const res = await fetch('http://localhost:3000/api/backup', {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (!res.ok) throw new Error('Backup request failed');

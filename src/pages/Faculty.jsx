@@ -34,9 +34,9 @@ const Faculty = () => {
     };
 
     const filteredFaculty = faculty.filter(f =>
-        f.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        f.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        f.department.toLowerCase().includes(searchTerm.toLowerCase())
+        (f.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (f.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (f.department || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const isAdmin = user?.role === 'admin';

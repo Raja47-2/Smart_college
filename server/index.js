@@ -1,24 +1,15 @@
 import express from 'express';
 import cors from 'cors';
-import { PORT } from './config.js';
-
-// Import route modules
-import authRoutes from './routes/auth.js';
-import studentRoutes from './routes/students.js';
-import facultyRoutes from './routes/faculty.js';
-import attendanceRoutes from './routes/attendance.js';
-import feeRoutes from './routes/fees.js';
-import assignmentRoutes from './routes/assignments.js';
-import notificationRoutes from './routes/notifications.js';
-import dashboardRoutes from './routes/dashboard.js';
-
-// Auto-initialize database tables and seed data
-import './initDb.js';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import db from './database.js';
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static(resolve(__dirname_backup, 'uploads')));
+
 
 // Middleware to verify Token
 const authenticateToken = (req, res, next) => {
@@ -227,14 +218,47 @@ app.delete('/api/faculty/:id', authenticateToken, (req, res) => {
 
 // --- ATTENDANCE ROUTES ---
 app.get('/api/attendance', authenticateToken, (req, res) => {
-    db.all("SELECT * FROM attendance", [], (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(rows);
-    });
+    if (req.user.role === 'student') {
+        // Find student profile for this user
+        db.get("SELECT id FROM students WHERE user_id = ?", [req.user.id], (err, student) => {
+            if (err) return res.status(500).json({ error: err.message });
+            if (!student) return res.json([]); // No profile, no attendance
+
+            db.all("SELECT * FROM attendance WHERE student_id = ?", [student.id], (err, rows) => {
+                if (err) return res.status(500).json({ error: err.message });
+                res.json(rows);
+            });
+        });
+    } else {
+        db.all("SELECT * FROM attendance", [], (err, rows) => {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json(rows);
+        });
+    }
 });
 
 app.post('/api/attendance', authenticateToken, (req, res) => {
     const { date, records } = req.body;
+
+    // Attendance Restrictions
+    if (req.user.role !== 'admin') {
+        const today = new Date().toISOString().split('T')[0];
+        if (date !== today) {
+            return res.status(403).json({ error: 'Attendance can only be marked for the current date.' });
+        }
+
+        const now = new Date();
+        const currentHours = now.getHours();
+        const currentMinutes = now.getMinutes();
+        const currentTime = currentHours * 60 + currentMinutes;
+
+        const startTime = 8 * 60 + 40; // 08:40 -> 520
+        const endTime = 14 * 60 + 50;  // 14:50 -> 890
+
+        if (currentTime < startTime || currentTime > endTime) {
+            return res.status(403).json({ error: 'Attendance can only be marked between 08:40 AM and 02:50 PM.' });
+        }
+    }
 
     db.serialize(() => {
         db.run("DELETE FROM attendance WHERE date = ?", date, (err) => {
@@ -381,6 +405,178 @@ app.get('/api/dashboard/stats', authenticateToken, (req, res) => {
             res.json(stats);
         });
     });
+});
+
+
+// --- COLLEGE INFO ROUTES ---
+app.get('/api/college-info', authenticateToken, (req, res) => {
+    db.all("SELECT key, value FROM college_info", [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        const info = {};
+        rows.forEach(r => info[r.key] = r.value);
+        res.json(info);
+    });
+});
+
+app.put('/api/college-info/:key', authenticateToken, (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    const { key } = req.params;
+    const { value } = req.body;
+    db.run("INSERT OR REPLACE INTO college_info (key, value) VALUES (?, ?)", [key, value], function (err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ message: 'Updated', key, value });
+    });
+});
+
+// --- ALUMNI ROUTES ---
+app.get('/api/alumni', authenticateToken, (req, res) => {
+    db.all("SELECT * FROM alumni ORDER BY batch_year DESC", [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+    });
+});
+
+app.post('/api/alumni', authenticateToken, upload.single('photo'), (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    const { name, batch_year, course, department, job_title, company, contact } = req.body;
+    const photo_url = req.file ? `/uploads/${req.file.filename}` : null;
+    const stmt = db.prepare("INSERT INTO alumni (name, batch_year, course, department, job_title, company, contact, photo_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    stmt.run(name, batch_year, course, department, job_title, company, contact, photo_url, function (err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ id: this.lastID, name, batch_year, course, department, job_title, company, contact, photo_url });
+    });
+});
+
+app.put('/api/alumni/:id', authenticateToken, upload.single('photo'), (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    const { name, batch_year, course, department, job_title, company, contact } = req.body;
+    // If a new photo was uploaded, use it; otherwise keep existing
+    if (req.file) {
+        const photo_url = `/uploads/${req.file.filename}`;
+        const stmt = db.prepare("UPDATE alumni SET name=?, batch_year=?, course=?, department=?, job_title=?, company=?, contact=?, photo_url=? WHERE id=?");
+        stmt.run(name, batch_year, course, department, job_title, company, contact, photo_url, req.params.id, function (err) {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json({ message: 'Updated', photo_url });
+        });
+    } else {
+        const stmt = db.prepare("UPDATE alumni SET name=?, batch_year=?, course=?, department=?, job_title=?, company=?, contact=? WHERE id=?");
+        stmt.run(name, batch_year, course, department, job_title, company, contact, req.params.id, function (err) {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json({ message: 'Updated' });
+        });
+    }
+});
+
+app.delete('/api/alumni/:id', authenticateToken, (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    db.run("DELETE FROM alumni WHERE id = ?", req.params.id, function (err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ message: 'Deleted' });
+    });
+});
+
+// --- STAFF CONTACTS ROUTES ---
+app.get('/api/staff-contacts', authenticateToken, (req, res) => {
+    db.all("SELECT * FROM staff_contacts ORDER BY department", [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+    });
+});
+
+app.post('/api/staff-contacts', authenticateToken, (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    const { name, department, designation, phone, email } = req.body;
+    const stmt = db.prepare("INSERT INTO staff_contacts (name, department, designation, phone, email) VALUES (?, ?, ?, ?, ?)");
+    stmt.run(name, department, designation, phone, email, function (err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ id: this.lastID, name, department, designation, phone, email });
+    });
+});
+
+app.put('/api/staff-contacts/:id', authenticateToken, (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    const { name, department, designation, phone, email } = req.body;
+    const stmt = db.prepare("UPDATE staff_contacts SET name=?, department=?, designation=?, phone=?, email=? WHERE id=?");
+    stmt.run(name, department, designation, phone, email, req.params.id, function (err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ message: 'Updated' });
+    });
+});
+
+app.delete('/api/staff-contacts/:id', authenticateToken, (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    db.run("DELETE FROM staff_contacts WHERE id = ?", req.params.id, function (err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ message: 'Deleted' });
+    });
+});
+
+// --- ATTENDANCE REPORT ---
+app.get('/api/attendance/report', authenticateToken, (req, res) => {
+    const { startDate, endDate } = req.query;
+    const query = `
+        SELECT 
+            s.id as student_id, s.name, s.course, s.department, s.year,
+            COUNT(CASE WHEN a.status = 'Present' THEN 1 END) as present_count,
+            COUNT(CASE WHEN a.status = 'Absent' THEN 1 END) as absent_count,
+            COUNT(a.id) as total_count
+        FROM students s
+        LEFT JOIN attendance a ON s.id = a.student_id
+        ${startDate && endDate ? "AND a.date BETWEEN ? AND ?" : ""}
+        GROUP BY s.id, s.name, s.course, s.department, s.year
+        ORDER BY s.name
+    `;
+    const params = startDate && endDate ? [startDate, endDate] : [];
+    db.all(query, params, (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        const report = rows.map(r => ({
+            ...r,
+            percentage: r.total_count > 0 ? Math.round((r.present_count / r.total_count) * 100) : 0,
+            low_attendance: r.total_count > 0 && (r.present_count / r.total_count) < 0.75
+        }));
+        res.json(report);
+    });
+});
+
+// --- FEE PAY & REMINDER ---
+app.put('/api/fees/:id/pay', authenticateToken, (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    db.run("UPDATE fees SET status = 'Paid' WHERE id = ?", req.params.id, function (err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ message: 'Fee marked as paid' });
+    });
+});
+
+app.post('/api/fees/remind', authenticateToken, (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    // Get all students with pending fees and send them a notification
+    db.all(`SELECT DISTINCT f.student_id, s.user_id, s.name, f.amount, f.type
+            FROM fees f JOIN students s ON f.student_id = s.id
+            WHERE f.status = 'Pending'`, [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (rows.length === 0) return res.json({ message: 'No pending fees found' });
+
+        const stmt = db.prepare("INSERT INTO notifications (user_id, title, message) VALUES (?, ?, ?)");
+        rows.forEach(r => {
+            const msg = `Reminder: You have a pending ${r.type} fee of ₹${r.amount}. Please pay at the earliest.`;
+            stmt.run(r.user_id, 'Fee Payment Reminder', msg);
+        });
+        stmt.finalize();
+        res.json({ message: `Reminders sent to ${rows.length} students` });
+    });
+});
+
+
+// --- DATA BACKUP ---
+app.get('/api/backup', authenticateToken, (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    const dbPath = resolve(__dirname_backup, 'college_v2.db');
+    const filename = `college_backup_${new Date().toISOString().split('T')[0]}.db`;
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Type', 'application/octet-stream');
+    const stream = createReadStream(dbPath);
+    stream.on('error', (err) => res.status(500).json({ error: 'Backup failed: ' + err.message }));
+    stream.pipe(res);
 });
 
 app.listen(PORT, () => {

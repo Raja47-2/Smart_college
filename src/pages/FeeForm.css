@@ -23,18 +23,26 @@
 .form-group select {
     width: 100%;
     padding: 0.625rem 0.75rem;
-    border: 1px solid var(--border-color);
+    border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: var(--radius);
     font-size: 0.875rem;
     transition: all 0.2s;
-    background-color: #fff;
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+    -webkit-text-fill-color: #ffffff;
+}
+
+.form-group select option {
+    background: #1e1e35;
+    color: #ffffff;
 }
 
 .form-group input:focus,
 .form-group select:focus {
     outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-glow);
+    background-color: rgba(255, 255, 255, 0.12);
 }
 
 .form-row {

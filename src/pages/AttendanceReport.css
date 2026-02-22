@@ -1,0 +1,113 @@
+.report-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.stat-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+    padding: 0.4rem 1rem;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+}
+
+.stat-pill strong {
+    color: var(--text-primary);
+}
+
+.stat-pill.low {
+    border-color: rgba(245, 158, 11, 0.25);
+    background: rgba(245, 158, 11, 0.06);
+    color: #fbbf24;
+}
+
+.filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    border-radius: 0.75rem;
+    margin-bottom: 1.5rem;
+    animation: fadeIn 0.3s ease both;
+}
+
+.filter-bar label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.filter-bar input[type="date"] {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: 0.5rem;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.85rem;
+}
+
+.filter-bar input[type="date"]:focus {
+    border-color: var(--primary);
+    outline: none;
+}
+
+/* Progress bar */
+.progress-bar {
+    position: relative;
+    height: 18px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    overflow: hidden;
+    min-width: 90px;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.progress-fill {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.6s ease;
+}
+
+.progress-fill.good {
+    background: linear-gradient(90deg, #10b981, #34d399);
+}
+
+.progress-fill.low {
+    background: linear-gradient(90deg, #ef4444, #f87171);
+}
+
+.progress-bar span {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: white;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.low-row {
+    background: rgba(239, 68, 68, 0.04) !important;
+}
+
+.present-cell {
+    color: #34d399;
+    font-weight: 600;
+}
+
+.absent-cell {
+    color: #f87171;
+    font-weight: 600;
+}

@@ -6,7 +6,7 @@ const require = createRequire(import.meta.url);
 const sqlite3 = require('sqlite3').verbose();
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const dbPath = resolve(__dirname, 'college.db');
+const dbPath = resolve(__dirname, 'college_v2.db');
 
 const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {

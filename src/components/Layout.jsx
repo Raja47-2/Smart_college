@@ -1,75 +1,74 @@
 import React from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, GraduationCap, CalendarCheck, Wallet, BookOpen, Bell, BarChart2, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, GraduationCap, CalendarCheck, Wallet, BookOpen, Bell, BarChart2, LogOut, Info, Users2, Phone, Database, TrendingUp, Zap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import './Layout.css';
+
+const navLink = (to, icon, label, end = false) => (
+    <NavLink
+        to={to}
+        end={end}
+        className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
+    >
+        {icon}
+        <span>{label}</span>
+    </NavLink>
+);
 
 const Layout = () => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
 
-    const handleLogout = () => {
-        logout();
-        navigate('/login');
-    };
+    const handleLogout = () => { logout(); navigate('/login'); };
 
     return (
         <div className="layout">
             <aside className="sidebar">
+                {/* Brand */}
                 <div className="brand">
-                    <GraduationCap size={32} color="var(--primary-color)" />
-                    <h1>Smart College</h1>
+                    <div className="brand-logo">
+                        <Zap size={20} color="white" />
+                    </div>
+                    <div>
+                        <h1>Smart College</h1>
+                        <span>Management System</span>
+                    </div>
                 </div>
+
                 <nav>
-                    <NavLink to="/" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')} end>
-                        <LayoutDashboard size={20} />
-                        <span>Dashboard</span>
-                    </NavLink>
-                    {(user?.role === 'admin' || user?.role === 'teacher') && (
-                        <>
-                            <NavLink to="/students" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
-                                <Users size={20} />
-                                <span>Students</span>
-                            </NavLink>
-                            <NavLink to="/faculty" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
-                                <GraduationCap size={20} />
-                                <span>Faculty</span>
-                            </NavLink>
-                        </>
-                    )}
-                    <NavLink to={user?.role === 'student' ? "/assignments" : "/assignments"} className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
-                        <BookOpen size={20} />
-                        <span>Assignments</span>
-                    </NavLink>
-                    <NavLink to="/attendance" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
-                        <CalendarCheck size={20} />
-                        <span>Attendance</span>
-                    </NavLink>
-                    <NavLink to="/fees" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
-                        <Wallet size={20} />
-                        <span>Fees</span>
-                    </NavLink>
-                    <NavLink to="/notifications" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
-                        <Bell size={20} />
-                        <span>Notifications</span>
-                    </NavLink>
-                    <NavLink to="/analytics" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
-                        <BarChart2 size={20} />
-                        <span>Analytics</span>
-                    </NavLink>
+                    {navLink('/', <LayoutDashboard size={19} />, 'Dashboard', true)}
+
+                    {(user?.role === 'admin' || user?.role === 'teacher') && (<>
+                        {navLink('/students', <Users size={19} />, 'Students')}
+                        {navLink('/faculty', <GraduationCap size={19} />, 'Faculty')}
+                    </>)}
+
+                    {navLink('/assignments', <BookOpen size={19} />, 'Assignments')}
+                    {navLink('/attendance', <CalendarCheck size={19} />, 'Attendance')}
+                    {navLink('/fees', <Wallet size={19} />, 'Fees')}
+                    {navLink('/notifications', <Bell size={19} />, 'Notifications')}
+                    {navLink('/analytics', <BarChart2 size={19} />, 'Analytics')}
+                    {navLink('/attendance-report', <TrendingUp size={19} />, 'Att. Report')}
+                    {navLink('/about', <Info size={19} />, 'About')}
+                    {navLink('/alumni', <Users2 size={19} />, 'Alumni')}
+                    {navLink('/contact', <Phone size={19} />, 'Contact')}
+                    {user?.role === 'admin' && navLink('/backup', <Database size={19} />, 'Backup')}
                 </nav>
+
                 <div className="sidebar-footer">
-                    <button onClick={handleLogout} className="nav-link logout-btn">
-                        <LogOut size={20} />
+                    <button onClick={handleLogout} className="logout-btn">
+                        <LogOut size={19} />
                         <span>Logout</span>
                     </button>
                 </div>
             </aside>
+
             <main className="main-content">
                 <header className="header">
-                    <h2>Welcome Back, {user?.name || 'User'}</h2>
+                    <h2>👋 Welcome, <strong style={{ color: 'var(--text-primary)' }}>{user?.name || 'User'}</strong></h2>
                     <div className="user-profile">
-                        <span className="role-badge">{user?.role}</span>
+                        <span>{user?.name}</span>
+                        <span className="role-badge" data-role={user?.role}>{user?.role}</span>
                     </div>
                 </header>
                 <div className="content-area">

@@ -7,10 +7,13 @@ import './Attendance.css';
 const Attendance = () => {
     const { user } = useAuth();
     const [students, setStudents] = useState([]);
+    const [filteredStudents, setFilteredStudents] = useState([]);
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [attendance, setAttendance] = useState({});
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState('');
+    const [selectedCourse, setSelectedCourse] = useState('');
+    const [selectedDepartment, setSelectedDepartment] = useState('');
 
     useEffect(() => {
         loadData();
@@ -40,11 +43,27 @@ const Attendance = () => {
                 });
             }
             setAttendance(attendanceMap);
+            filterStudents(studentsList, selectedCourse, selectedDepartment);
         } catch (error) {
             console.error("Error loading data", error);
         } finally {
             setLoading(false);
         }
+    };
+
+    useEffect(() => {
+        filterStudents(students, selectedCourse, selectedDepartment);
+    }, [selectedCourse, selectedDepartment, students]);
+
+    const filterStudents = (allStudents, course, department) => {
+        let filtered = allStudents;
+        if (course) {
+            filtered = filtered.filter(s => s.course === course);
+        }
+        if (department) {
+            filtered = filtered.filter(s => s.department === department);
+        }
+        setFilteredStudents(filtered);
     };
 
     const handleStatusChange = (studentId, status) => {
@@ -70,27 +89,75 @@ const Attendance = () => {
         }
     };
 
+    // Helper to check if attendance window is open (08:40 AM - 02:50 PM)
+    const isAttendanceOpen = () => {
+        const now = new Date();
+        const currentHours = now.getHours();
+        const currentMinutes = now.getMinutes();
+        const currentTime = currentHours * 60 + currentMinutes;
+
+        const startTime = 8 * 60 + 40; // 08:40 -> 520 minutes
+        const endTime = 14 * 60 + 50;  // 14:50 -> 890 minutes
+
+        return currentTime >= startTime && currentTime <= endTime;
+    };
+
+    const isToday = (selectedDate) => {
+        const today = new Date().toISOString().split('T')[0];
+        return selectedDate === today;
+    };
+
     // Only Admin and Teacher can modify attendance
-    const canModify = user?.role === 'admin' || user?.role === 'teacher';
+    // Teacher restricted by time (08:40-02:50) and date (Today only)
+    const canModify = user?.role === 'admin' ||
+        (user?.role === 'teacher' && isToday(date) && isAttendanceOpen());
 
     return (
         <div className="page-container">
             <div className="page-header">
                 <h1>Attendance</h1>
-                <div className="date-picker-wrapper">
-                    <Calendar size={18} />
-                    <input
-                        type="date"
-                        value={date}
-                        onChange={(e) => setDate(e.target.value)}
-                        className="date-input"
-                    />
+                <div className="controls">
+                    <div className="date-picker-wrapper">
+                        <Calendar size={18} />
+                        <input
+                            type="date"
+                            value={date}
+                            onChange={(e) => setDate(e.target.value)}
+                            className="date-input"
+                        />
+                    </div>
+                    <select
+                        value={selectedCourse}
+                        onChange={(e) => setSelectedCourse(e.target.value)}
+                        className="filter-select"
+                    >
+                        <option value="">All Courses</option>
+                        <option value="Engineering">Engineering</option>
+                        <option value="Polytechnic">Polytechnic</option>
+                    </select>
+                    <select
+                        value={selectedDepartment}
+                        onChange={(e) => setSelectedDepartment(e.target.value)}
+                        className="filter-select"
+                    >
+                        <option value="">All Departments</option>
+                        <option value="Computer Science">Computer Science</option>
+                        <option value="Mechanical">Mechanical</option>
+                        <option value="Electrical">Electrical</option>
+                        <option value="Civil">Civil</option>
+                    </select>
                 </div>
             </div>
 
-            {students.length === 0 ? (
+            {!canModify && user?.role === 'teacher' && (
+                <div className="alert-banner">
+                    Attendance marking is locked. Allowed only between 08:40 AM and 02:50 PM for the current date.
+                </div>
+            )}
+
+            {filteredStudents.length === 0 ? (
                 <div className="empty-state">
-                    <p>No students found. Please add students first.</p>
+                    <p>No students found for the selected criteria.</p>
                 </div>
             ) : (
                 <div className="attendance-container">
@@ -99,14 +166,16 @@ const Attendance = () => {
                             <tr>
                                 <th>Student Name</th>
                                 <th>Course</th>
+                                <th>Department</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {students.map(student => (
+                            {filteredStudents.map(student => (
                                 <tr key={student.id}>
                                     <td>{student.name}</td>
                                     <td>{student.course}</td>
+                                    <td>{student.department}</td>
                                     <td>
                                         {canModify ? (
                                             <div className="status-toggles">

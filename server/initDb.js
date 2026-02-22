@@ -96,6 +96,36 @@ const createTables = () => {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
 
+    // College Info Table (key-value)
+    db.run(`CREATE TABLE IF NOT EXISTS college_info (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      key TEXT UNIQUE NOT NULL,
+      value TEXT
+    )`);
+
+    // Alumni Table
+    db.run(`CREATE TABLE IF NOT EXISTS alumni (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      batch_year TEXT,
+      course TEXT,
+      department TEXT,
+      job_title TEXT,
+      company TEXT,
+      contact TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`);
+
+    // Staff Contacts Table
+    db.run(`CREATE TABLE IF NOT EXISTS staff_contacts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      department TEXT,
+      designation TEXT,
+      phone TEXT,
+      email TEXT
+    )`);
+
     console.log('Tables created.');
     seedData();
   });

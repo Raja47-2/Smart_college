@@ -40,12 +40,15 @@ const FacultyForm = () => {
         try {
             if (isEditMode) {
                 await updateFaculty(id, formData);
+                alert('Faculty updated successfully!');
             } else {
                 await addFaculty(formData);
+                alert('Faculty added successfully!');
             }
             navigate('/faculty');
         } catch (error) {
             console.error("Error saving faculty", error);
+            alert('Failed to save faculty. Please check the console for details.\nError: ' + (error.response?.data?.error || error.message));
         }
     };
 

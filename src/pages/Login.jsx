@@ -38,7 +38,11 @@ const Login = () => {
             else if (user.role === 'teacher') navigate('/teacher-dashboard');
             else navigate('/');
         } catch (err) {
-            setError('Invalid email or password');
+            if (selectedRole === 'student') {
+                setError('Invalid Registration Number or password. Check your registration number and try again.');
+            } else {
+                setError('Invalid email or password. Please check your credentials.');
+            }
         }
     };
 
@@ -81,22 +85,32 @@ const Login = () => {
                 <h2>{selectedRole === 'student' ? 'Student' : (selectedRole === 'teacher' ? 'Faculty' : 'Admin')} Login</h2>
                 {error && <p className="error">{error}</p>}
                 <div className="form-group">
-                    <label>{selectedRole === 'student' ? 'Registration No' : 'Email'}</label>
+                    <label>{selectedRole === 'student' ? 'Registration Number' : 'Email'}</label>
                     <input
                         type={selectedRole === 'student' ? 'text' : 'email'}
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        placeholder={selectedRole === 'student' ? 'e.g. REG-2024-001' : 'e.g. admin@college.edu'}
+                        placeholder={
+                            selectedRole === 'student'
+                                ? 'e.g. REG-2024-001'
+                                : selectedRole === 'admin'
+                                    ? 'admin@college.edu'
+                                    : 'faculty@college.edu'
+                        }
                         required
                     />
                 </div>
                 <div className="form-group">
-                    <label>Password (Optional)</label>
+                    <label>Password</label>
                     <input
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        placeholder="No password required"
+                        placeholder={
+                            selectedRole === 'admin'
+                                ? 'Default: admin123'
+                                : 'Enter your password (if set)'
+                        }
                     />
                 </div>
                 <button type="submit" className="btn btn-primary">Login</button>

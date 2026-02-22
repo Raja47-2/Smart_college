@@ -43,12 +43,15 @@ const StudentForm = () => {
         try {
             if (isEditMode) {
                 await updateStudent(id, formData);
+                alert('Student updated successfully!');
             } else {
                 await addStudent(formData);
+                alert('Student added successfully!');
             }
             navigate('/students');
         } catch (error) {
             console.error("Error saving student", error);
+            alert('Failed to save student. Please check the console for details.\nError: ' + (error.response?.data?.error || error.message));
         }
     };
 

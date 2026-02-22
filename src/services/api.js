@@ -14,19 +14,74 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
+// ─── Local Storage-based Authentication (no backend needed) ───────────────────
+const HARDCODED_ADMIN = {
+    email: 'admin@college.edu',
+    password: 'admin123',
+    role: 'admin',
+    name: 'Admin',
+};
+
 export const loginUser = async (identifier, password) => {
-    // Send 'email' field if it looks like an email, otherwise send 'identifier' or just send 'identifier' for both if backend handles it?
-    // My backend update handles `identifier || email`. So I can just send `{ identifier }`.
-    // But to be safe and compatible with old calls if any, I'll send both or map it.
-    // actually backend: `const { email, password, identifier } = req.body;`
-    // `const loginId = identifier || email;`
-    // So I can send `{ identifier: identifier, password }`.
-    const response = await api.post('/auth/login', { identifier, password });
-    if (response.data.token) {
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data));
+    const id = (identifier || '').trim();
+    const pwd = (password || '').trim();
+
+    // 1. Check hardcoded admin account
+    if (
+        (id === HARDCODED_ADMIN.email) &&
+        (pwd === '' || pwd === HARDCODED_ADMIN.password)
+    ) {
+        const userData = { ...HARDCODED_ADMIN, token: 'local-admin-token', id: 'admin-001' };
+        delete userData.password;
+        localStorage.setItem('token', userData.token);
+        localStorage.setItem('user', JSON.stringify(userData));
+        return userData;
     }
-    return response.data;
+
+    // 2. Check faculty stored in localStorage
+    const db = JSON.parse(localStorage.getItem('smart_college_db') || '{}');
+    const faculty = db.faculty || [];
+    const matchedFaculty = faculty.find(
+        (f) =>
+            f.email &&
+            f.email.toLowerCase() === id.toLowerCase() &&
+            (pwd === '' || f.password === pwd || !f.password)
+    );
+    if (matchedFaculty) {
+        const userData = {
+            id: matchedFaculty.id,
+            name: matchedFaculty.name,
+            email: matchedFaculty.email,
+            role: 'teacher',
+            token: 'local-teacher-token-' + matchedFaculty.id,
+        };
+        localStorage.setItem('token', userData.token);
+        localStorage.setItem('user', JSON.stringify(userData));
+        return userData;
+    }
+
+    // 3. Check students stored in localStorage (by registration number)
+    const students = db.students || [];
+    const matchedStudent = students.find(
+        (s) =>
+            (s.registrationNumber && s.registrationNumber === id) &&
+            (pwd === '' || s.password === pwd || !s.password)
+    );
+    if (matchedStudent) {
+        const userData = {
+            id: matchedStudent.id,
+            name: matchedStudent.name,
+            email: matchedStudent.email || id,
+            role: 'student',
+            token: 'local-student-token-' + matchedStudent.id,
+        };
+        localStorage.setItem('token', userData.token);
+        localStorage.setItem('user', JSON.stringify(userData));
+        return userData;
+    }
+
+    // No match found
+    throw new Error('Invalid credentials');
 };
 
 export const logoutUser = () => {

@@ -20,6 +20,11 @@ import Assignments from './pages/Assignments';
 import AssignmentForm from './pages/AssignmentForm';
 import Notifications from './pages/Notifications';
 import Analytics from './pages/Analytics';
+import About from './pages/About';
+import Alumni from './pages/Alumni';
+import Contact from './pages/Contact';
+import Backup from './pages/Backup';
+import AttendanceReport from './pages/AttendanceReport';
 
 import { AuthProvider } from './context/AuthContext';
 import Login from './pages/Login';
@@ -56,6 +61,11 @@ function App() {
             <Route path="assignments/add" element={<AssignmentForm />} />
             <Route path="notifications" element={<Notifications />} />
             <Route path="analytics" element={<Analytics />} />
+            <Route path="about" element={<About />} />
+            <Route path="alumni" element={<Alumni />} />
+            <Route path="contact" element={<Contact />} />
+            <Route path="backup" element={<Backup />} />
+            <Route path="attendance-report" element={<AttendanceReport />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>

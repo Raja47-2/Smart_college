@@ -1,159 +1,313 @@
+/* ============================================
+   LOGIN PAGE
+   ============================================ */
 .login-container {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
-    background-color: var(--background-color);
-}
-
-.login-form {
-    background: white;
+    min-height: 100vh;
     padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    width: 100%;
-    max-width: 400px;
+    position: relative;
+    overflow: hidden;
 }
 
-.login-form h2 {
-    text-align: center;
-    margin-bottom: 1.5rem;
-    color: var(--primary-color);
+/* Animated background blobs */
+.login-container::before,
+.login-container::after {
+    content: '';
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.5;
+    animation: float 8s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 0;
 }
 
-.error {
-    color: #ef4444;
-    text-align: center;
-    margin-bottom: 1rem;
+.login-container::before {
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, transparent 70%);
+    top: -150px;
+    left: -100px;
 }
 
-.form-group {
-    margin-bottom: 1rem;
+.login-container::after {
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(6, 182, 212, 0.2) 0%, transparent 70%);
+    bottom: -100px;
+    right: -100px;
+    animation-delay: 3s;
 }
 
-.form-group label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 500;
-}
-
-.form-group input {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
-
-.btn-primary {
-    width: 100%;
-}
-
-/* Role Selection Styles */
+/* ============================================
+   ROLE SELECTION
+   ============================================ */
 .role-selection-container {
-    background: white;
-    padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    position: relative;
+    z-index: 1;
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 3rem 2.5rem;
+    border-radius: 1.5rem;
     width: 100%;
-    max-width: 800px;
+    max-width: 700px;
     text-align: center;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(99, 102, 241, 0.1);
+    animation: scaleIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.role-selection-container h1 {
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #f0f0ff, #818cf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.role-selection-container>p {
+    color: var(--text-muted);
+    margin-bottom: 2.5rem;
+    font-size: 0.95rem;
 }
 
 .role-cards {
     display: flex;
     justify-content: center;
     align-items: stretch;
-    gap: 2rem;
-    margin-top: 2rem;
-    flex-wrap: nowrap;
-    /* Force single line */
+    gap: 1.5rem;
+    flex-wrap: wrap;
 }
 
 .role-card {
-    background: #fff;
-    border: 2px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 2rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1rem;
+    padding: 2rem 1.5rem;
     cursor: pointer;
-    transition: all 0.3s ease;
-    width: 200px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 180px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1rem;
+    gap: 0.75rem;
     position: relative;
     overflow: hidden;
+    animation: fadeIn 0.5s ease both;
+}
+
+.role-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.3s;
+    border-radius: 1rem;
 }
 
 .role-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    transform: translateY(-8px) scale(1.03);
+    border-color: transparent;
+}
+
+.role-card:hover::before {
+    opacity: 1;
 }
 
 .role-icon {
-    width: 48px;
-    height: 48px;
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     margin-bottom: 0.5rem;
+    transition: transform 0.3s;
+}
+
+.role-card:hover .role-icon {
+    transform: scale(1.15) rotate(-5deg);
 }
 
 .role-card h3 {
     margin: 0;
-    font-size: 1.25rem;
-    font-weight: 600;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
 }
 
-/* Distinct Card Styles */
+.role-card p {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* Student card */
 .role-card.student {
-    border-color: #3b82f6;
+    animation-delay: 0.05s;
 }
 
 .role-card.student:hover {
-    background-color: #eff6ff;
+    box-shadow: 0 20px 40px rgba(59, 130, 246, 0.25);
+}
+
+.role-card.student::before {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05));
 }
 
 .role-card.student .role-icon {
-    color: #3b82f6;
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
 }
 
+.role-card.student:hover {
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+/* Faculty card */
 .role-card.faculty {
-    border-color: #10b981;
+    animation-delay: 0.1s;
 }
 
 .role-card.faculty:hover {
-    background-color: #ecfdf5;
+    box-shadow: 0 20px 40px rgba(16, 185, 129, 0.25);
+}
+
+.role-card.faculty::before {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05));
 }
 
 .role-card.faculty .role-icon {
-    color: #10b981;
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
 }
 
+.role-card.faculty:hover {
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+/* Admin card */
 .role-card.admin {
-    border-color: #f59e0b;
+    animation-delay: 0.15s;
 }
 
 .role-card.admin:hover {
-    background-color: #fffbeb;
+    box-shadow: 0 20px 40px rgba(245, 158, 11, 0.25);
+}
+
+.role-card.admin::before {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05));
 }
 
 .role-card.admin .role-icon {
-    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+}
+
+.role-card.admin:hover {
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+/* ============================================
+   LOGIN FORM
+   ============================================ */
+.login-form {
+    position: relative;
+    z-index: 1;
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 2.5rem;
+    border-radius: 1.5rem;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+    animation: scaleIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.login-form-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.login-form-header h2 {
+    font-size: 1.6rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #f0f0ff, #818cf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.25rem;
+}
+
+.login-form-header p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.login-form .form-group {
+    margin-bottom: 1.25rem;
+}
+
+/* ── Input colours inside login form ── */
+.login-form input {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.10);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.login-form input::placeholder {
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.login-form input:focus {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.14);
+    border-color: var(--primary);
+}
+
+.login-form .btn-primary {
+    width: 100%;
+    padding: 0.8rem;
+    font-size: 0.95rem;
+    margin-top: 0.5rem;
+    justify-content: center;
+}
+
+.error {
+    color: #f87171;
+    text-align: center;
+    font-size: 0.85rem;
+    padding: 0.65rem 1rem;
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    animation: slideInLeft 0.3s ease both;
 }
 
 .back-btn {
-    background: none;
-    border: none;
-    color: #64748b;
-    cursor: pointer;
-    font-size: 0.9rem;
-    margin-bottom: 1rem;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0;
+    gap: 0.4rem;
+    color: var(--text-muted);
+    font-size: 0.85rem;
     font-weight: 500;
+    margin-bottom: 1.5rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.2s;
+    font-family: inherit;
 }
 
 .back-btn:hover {
-    color: var(--primary-color);
-    text-decoration: underline;
+    color: var(--primary);
 }

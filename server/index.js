@@ -2,7 +2,25 @@ import express from 'express';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { createRequire } from 'module';
+import { createReadStream } from 'fs';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+import multer from 'multer';
 import db from './database.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname_backup = dirname(__filename);
+
+const PORT = process.env.PORT || 5000;
+const SECRET_KEY = process.env.JWT_SECRET || 'smart_college_secret_key_2024';
+
+// Multer setup for file uploads
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, resolve(__dirname_backup, 'uploads')),
+    filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname),
+});
+const upload = multer({ storage });
 
 const app = express();
 
@@ -29,61 +47,54 @@ const authenticateToken = (req, res, next) => {
 // --- AUTH ROUTES ---
 app.post('/api/auth/login', (req, res) => {
     const { email, password, identifier } = req.body;
-    const loginId = identifier || email; // Support both fields
+    const loginId = identifier || email;
 
-    // Try to find user by Email first (common case)
+    // Try to find user by Email first
     db.get("SELECT * FROM users WHERE email = ?", [loginId], async (err, user) => {
         if (err) return res.status(500).json({ error: err.message });
 
         if (user) {
-            // User found by Email
-            // const validPassword = await bcrypt.compare(password, user.password);
-            // if (!validPassword) return res.status(400).json({ error: 'Invalid password' });
-
             const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, SECRET_KEY, { expiresIn: '30d' });
-            res.json({ token, role: user.role, name: user.name });
-        } else {
-            // User not found by Email, check if it's a Registration No (for Students)
-            // 1. Find the student with this Reg No
-            db.get("SELECT user_id FROM students WHERE registration_no = ?", [loginId], (err, student) => {
-                if (err) return res.status(500).json({ error: err.message });
-                if (!student) return res.status(400).json({ error: 'User not found' });
+            return res.json({ token, role: user.role, name: user.name });
+        }
 
-                // 2. Find the User record linked to this student
+        // Not found by email — check student registration number
+        db.get("SELECT user_id FROM students WHERE registration_no = ?", [loginId], (err, student) => {
+            if (err) return res.status(500).json({ error: err.message });
+
+            if (student) {
                 db.get("SELECT * FROM users WHERE id = ?", [student.user_id], async (err, linkedUser) => {
                     if (err) return res.status(500).json({ error: err.message });
                     if (!linkedUser) return res.status(400).json({ error: 'User record not found' });
 
-                        const validPassword = await bcrypt.compare(password, linkedUser.password);
-                        if (!validPassword) return res.status(400).json({ error: 'Invalid password' });
+                    const validPassword = await bcrypt.compare(password, linkedUser.password);
+                    if (!validPassword) return res.status(400).json({ error: 'Invalid password' });
 
-                        const token = jwt.sign({ id: linkedUser.id, email: linkedUser.email, role: linkedUser.role }, SECRET_KEY, { expiresIn: '1h' });
-                        res.json({ token, role: linkedUser.role, name: linkedUser.name });
-                    });
-                } else {
-                    // 2. Check Faculty
-                    db.get("SELECT user_id FROM faculty WHERE registration_no = ?", [loginId], (err, faculty) => {
-                        if (err) return res.status(500).json({ error: err.message });
+                    const token = jwt.sign({ id: linkedUser.id, email: linkedUser.email, role: linkedUser.role }, SECRET_KEY, { expiresIn: '1h' });
+                    return res.json({ token, role: linkedUser.role, name: linkedUser.name });
+                });
+            } else {
+                // Check Faculty registration number
+                db.get("SELECT user_id FROM faculty WHERE registration_no = ?", [loginId], (err, faculty) => {
+                    if (err) return res.status(500).json({ error: err.message });
 
-                        if (faculty) {
-                            // Found Faculty
-                            db.get("SELECT * FROM users WHERE id = ?", [faculty.user_id], async (err, linkedUser) => {
-                                if (err) return res.status(500).json({ error: err.message });
-                                if (!linkedUser) return res.status(400).json({ error: 'User record not found' });
+                    if (faculty) {
+                        db.get("SELECT * FROM users WHERE id = ?", [faculty.user_id], async (err, linkedUser) => {
+                            if (err) return res.status(500).json({ error: err.message });
+                            if (!linkedUser) return res.status(400).json({ error: 'User record not found' });
 
-                                const validPassword = await bcrypt.compare(password, linkedUser.password);
-                                if (!validPassword) return res.status(400).json({ error: 'Invalid password' });
+                            const validPassword = await bcrypt.compare(password, linkedUser.password);
+                            if (!validPassword) return res.status(400).json({ error: 'Invalid password' });
 
-                                const token = jwt.sign({ id: linkedUser.id, email: linkedUser.email, role: linkedUser.role }, SECRET_KEY, { expiresIn: '1h' });
-                                res.json({ token, role: linkedUser.role, name: linkedUser.name });
-                            });
-                        } else {
-                            return res.status(400).json({ error: 'User not found' });
-                        }
-                    });
-                }
-            });
-        }
+                            const token = jwt.sign({ id: linkedUser.id, email: linkedUser.email, role: linkedUser.role }, SECRET_KEY, { expiresIn: '1h' });
+                            return res.json({ token, role: linkedUser.role, name: linkedUser.name });
+                        });
+                    } else {
+                        return res.status(400).json({ error: 'User not found' });
+                    }
+                });
+            }
+        });
     });
 });
 
@@ -169,7 +180,8 @@ app.get('/api/faculty', authenticateToken, (req, res) => {
 });
 
 app.post('/api/faculty', authenticateToken, (req, res) => {
-    const { name, email, department, designation, registration_no, password } = req.body;
+    const { name, email, department, designation, registration_no } = req.body;
+    let password = req.body.password;
 
     if (!password) {
         password = '123456';

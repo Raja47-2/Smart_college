@@ -113,6 +113,7 @@ const createTables = () => {
       job_title TEXT,
       company TEXT,
       contact TEXT,
+      photo_url TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
 

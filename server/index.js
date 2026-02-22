@@ -2,13 +2,32 @@ import express from 'express';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
+import { createReadStream } from 'fs';
+import multer from 'multer';
 import db from './database.js';
+
+// ES Module __dirname equivalent
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Config
+const SECRET_KEY = process.env.SECRET_KEY || 'your-secret-key-change-in-production';
+const PORT = process.env.PORT || 3000;
+
+// Multer setup for file uploads
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, resolve(__dirname, 'uploads')),
+    filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
+});
+const upload = multer({ storage });
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static(resolve(__dirname_backup, 'uploads')));
+app.use('/uploads', express.static(resolve(__dirname, 'uploads')));
 
 
 // Middleware to verify Token
@@ -26,7 +45,6 @@ const authenticateToken = (req, res, next) => {
 };
 
 // --- AUTH ROUTES ---
-// --- AUTH ROUTES ---
 app.post('/api/auth/login', (req, res) => {
     const { email, password, identifier } = req.body;
     const loginId = identifier || email; // Support both fields
@@ -37,27 +55,27 @@ app.post('/api/auth/login', (req, res) => {
 
         if (user) {
             // User found by Email
-            // const validPassword = await bcrypt.compare(password, user.password);
-            // if (!validPassword) return res.status(400).json({ error: 'Invalid password' });
+            const validPassword = await bcrypt.compare(password, user.password);
+            if (!validPassword) return res.status(400).json({ error: 'Invalid password' });
 
             const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, SECRET_KEY, { expiresIn: '30d' });
             res.json({ token, role: user.role, name: user.name });
         } else {
-            // User not found by Email, check if it's a Registration No (for Students)
-            // 1. Find the student with this Reg No
+            // User not found by Email, check if it's a Registration No
+            // 1. Check Students first
             db.get("SELECT user_id FROM students WHERE registration_no = ?", [loginId], (err, student) => {
                 if (err) return res.status(500).json({ error: err.message });
-                if (!student) return res.status(400).json({ error: 'User not found' });
 
-                // 2. Find the User record linked to this student
-                db.get("SELECT * FROM users WHERE id = ?", [student.user_id], async (err, linkedUser) => {
-                    if (err) return res.status(500).json({ error: err.message });
-                    if (!linkedUser) return res.status(400).json({ error: 'User record not found' });
+                if (student) {
+                    // Found Student — get linked user
+                    db.get("SELECT * FROM users WHERE id = ?", [student.user_id], async (err, linkedUser) => {
+                        if (err) return res.status(500).json({ error: err.message });
+                        if (!linkedUser) return res.status(400).json({ error: 'User record not found' });
 
                         const validPassword = await bcrypt.compare(password, linkedUser.password);
                         if (!validPassword) return res.status(400).json({ error: 'Invalid password' });
 
-                        const token = jwt.sign({ id: linkedUser.id, email: linkedUser.email, role: linkedUser.role }, SECRET_KEY, { expiresIn: '1h' });
+                        const token = jwt.sign({ id: linkedUser.id, email: linkedUser.email, role: linkedUser.role }, SECRET_KEY, { expiresIn: '30d' });
                         res.json({ token, role: linkedUser.role, name: linkedUser.name });
                     });
                 } else {
@@ -74,7 +92,7 @@ app.post('/api/auth/login', (req, res) => {
                                 const validPassword = await bcrypt.compare(password, linkedUser.password);
                                 if (!validPassword) return res.status(400).json({ error: 'Invalid password' });
 
-                                const token = jwt.sign({ id: linkedUser.id, email: linkedUser.email, role: linkedUser.role }, SECRET_KEY, { expiresIn: '1h' });
+                                const token = jwt.sign({ id: linkedUser.id, email: linkedUser.email, role: linkedUser.role }, SECRET_KEY, { expiresIn: '30d' });
                                 res.json({ token, role: linkedUser.role, name: linkedUser.name });
                             });
                         } else {
@@ -147,9 +165,19 @@ app.put('/api/students/:id', authenticateToken, (req, res) => {
 });
 
 app.delete('/api/students/:id', authenticateToken, (req, res) => {
-    db.run("DELETE FROM students WHERE id = ?", req.params.id, function (err) {
+    // Get user_id before deleting so we can clean up the users table
+    db.get("SELECT user_id FROM students WHERE id = ?", [req.params.id], (err, student) => {
         if (err) return res.status(500).json({ error: err.message });
-        res.json({ message: 'Deleted' });
+        if (!student) return res.status(404).json({ error: 'Student not found' });
+
+        db.run("DELETE FROM students WHERE id = ?", req.params.id, function (err) {
+            if (err) return res.status(500).json({ error: err.message });
+            // Also delete the associated user record
+            if (student.user_id) {
+                db.run("DELETE FROM users WHERE id = ?", student.user_id);
+            }
+            res.json({ message: 'Deleted' });
+        });
     });
 });
 
@@ -169,7 +197,7 @@ app.get('/api/faculty', authenticateToken, (req, res) => {
 });
 
 app.post('/api/faculty', authenticateToken, (req, res) => {
-    const { name, email, department, designation, registration_no, password } = req.body;
+    let { name, email, department, designation, registration_no, password } = req.body;
 
     if (!password) {
         password = '123456';
@@ -188,8 +216,8 @@ app.post('/api/faculty', authenticateToken, (req, res) => {
 
                 const userId = this.lastID;
 
-                const stmt = db.prepare("INSERT INTO faculty (user_id, name, email, department, designation) VALUES (?, ?, ?, ?, ?)");
-                stmt.run(userId, name, email, department, designation, function (err) {
+                const stmt = db.prepare("INSERT INTO faculty (user_id, name, email, department, designation, registration_no) VALUES (?, ?, ?, ?, ?, ?)");
+                stmt.run(userId, name, email, department, designation, registration_no, function (err) {
                     if (err) return res.status(500).json({ error: err.message });
                     res.json({ id: this.lastID, user_id: userId, ...req.body });
                 });
@@ -201,18 +229,28 @@ app.post('/api/faculty', authenticateToken, (req, res) => {
 });
 
 app.put('/api/faculty/:id', authenticateToken, (req, res) => {
-    const { name, email, department, designation } = req.body;
-    const stmt = db.prepare("UPDATE faculty SET name = ?, email = ?, department = ?, designation = ? WHERE id = ?");
-    stmt.run(name, email, department, designation, req.params.id, function (err) {
+    const { name, email, department, designation, registration_no } = req.body;
+    const stmt = db.prepare("UPDATE faculty SET name = ?, email = ?, department = ?, designation = ?, registration_no = ? WHERE id = ?");
+    stmt.run(name, email, department, designation, registration_no, req.params.id, function (err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ message: 'Updated' });
     });
 });
 
 app.delete('/api/faculty/:id', authenticateToken, (req, res) => {
-    db.run("DELETE FROM faculty WHERE id = ?", req.params.id, function (err) {
+    // Get user_id before deleting so we can clean up the users table
+    db.get("SELECT user_id FROM faculty WHERE id = ?", [req.params.id], (err, faculty) => {
         if (err) return res.status(500).json({ error: err.message });
-        res.json({ message: 'Deleted' });
+        if (!faculty) return res.status(404).json({ error: 'Faculty not found' });
+
+        db.run("DELETE FROM faculty WHERE id = ?", req.params.id, function (err) {
+            if (err) return res.status(500).json({ error: err.message });
+            // Also delete the associated user record
+            if (faculty.user_id) {
+                db.run("DELETE FROM users WHERE id = ?", faculty.user_id);
+            }
+            res.json({ message: 'Deleted' });
+        });
     });
 });
 
@@ -260,8 +298,15 @@ app.post('/api/attendance', authenticateToken, (req, res) => {
         }
     }
 
+    // Only delete attendance for the students included in this submission
+    const studentIds = records.map(r => r.studentId);
+    if (studentIds.length === 0) {
+        return res.status(400).json({ error: 'No records provided' });
+    }
+
     db.serialize(() => {
-        db.run("DELETE FROM attendance WHERE date = ?", date, (err) => {
+        const placeholders = studentIds.map(() => '?').join(',');
+        db.run(`DELETE FROM attendance WHERE date = ? AND student_id IN (${placeholders})`, [date, ...studentIds], (err) => {
             if (err) return res.status(500).json({ error: err.message });
 
             const stmt = db.prepare("INSERT INTO attendance (student_id, date, status) VALUES (?, ?, ?)");
@@ -309,7 +354,6 @@ app.delete('/api/fees/:id', authenticateToken, (req, res) => {
 
 // --- ASSIGNMENTS ROUTES ---
 app.get('/api/assignments', authenticateToken, (req, res) => {
-    // If student, filter by their course? For now, fetch all or query param
     db.all("SELECT a.*, u.name as teacher_name FROM assignments a LEFT JOIN users u ON a.teacher_id = u.id", [], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
@@ -321,9 +365,6 @@ app.post('/api/assignments', authenticateToken, (req, res) => {
         return res.sendStatus(403);
     }
     const { title, description, course, dueDate, teacherId } = req.body;
-    // req.user.id is the user_id (auth). We might need to map it to teacher_id if they are separate tables, 
-    // but in my schema 'teacher_id' in assignments refers to 'users(id)' directly? 
-    // initDb.js says: FOREIGN KEY(teacher_id) REFERENCES users(id) -> Yes.
 
     const stmt = db.prepare("INSERT INTO assignments (title, description, course, due_date, teacher_id) VALUES (?, ?, ?, ?, ?)");
     stmt.run(title, description, course, dueDate, req.user.id, function (err) {
@@ -334,11 +375,8 @@ app.post('/api/assignments', authenticateToken, (req, res) => {
 
 // --- SUBMISSIONS ROUTES ---
 app.post('/api/assignments/:id/submit', authenticateToken, (req, res) => {
-    const { fileUrl, studentId } = req.body; // studentId usually comes from logged in user
-    // We need to find the student record associated with this user.
-    // In simpler design, we might just use req.user.id if submissions linked to user, but schema says student_id.
+    const { fileUrl, studentId } = req.body;
 
-    // First find student_id for this user
     db.get("SELECT id FROM students WHERE user_id = ?", [req.user.id], (err, student) => {
         if (err) return res.status(500).json({ error: err.message });
         if (!student) return res.status(400).json({ error: 'Student profile not found' });
@@ -366,7 +404,6 @@ app.get('/api/assignments/:id/submissions', authenticateToken, (req, res) => {
 
 // --- NOTIFICATIONS ROUTES ---
 app.get('/api/notifications', authenticateToken, (req, res) => {
-    // Get notifications for this user OR global ones (user_id IS NULL)
     db.all("SELECT * FROM notifications WHERE user_id = ? OR user_id IS NULL ORDER BY created_at DESC", [req.user.id], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
@@ -374,10 +411,10 @@ app.get('/api/notifications', authenticateToken, (req, res) => {
 });
 
 app.post('/api/notifications', authenticateToken, (req, res) => {
-    if (req.user.role !== 'admin' && req.user.role !== 'teacher') { // Only admin/teacher can send?
+    if (req.user.role !== 'admin' && req.user.role !== 'teacher') {
         return res.sendStatus(403);
     }
-    const { userId, title, message } = req.body; // userId can be null for broadcast
+    const { userId, title, message } = req.body;
     const stmt = db.prepare("INSERT INTO notifications (user_id, title, message) VALUES (?, ?, ?)");
     stmt.run(userId, title, message, function (err) {
         if (err) return res.status(500).json({ error: err.message });
@@ -398,15 +435,21 @@ app.get('/api/dashboard/stats', authenticateToken, (req, res) => {
     const stats = {};
 
     db.serialize(() => {
-        db.get("SELECT count(*) as count FROM students", (err, row) => stats.students = row ? row.count : 0);
-        db.get("SELECT count(*) as count FROM faculty", (err, row) => stats.faculty = row ? row.count : 0);
+        db.get("SELECT count(*) as count FROM students", (err, row) => {
+            if (err) return res.status(500).json({ error: err.message });
+            stats.students = row ? row.count : 0;
+        });
+        db.get("SELECT count(*) as count FROM faculty", (err, row) => {
+            if (err) return res.status(500).json({ error: err.message });
+            stats.faculty = row ? row.count : 0;
+        });
         db.get("SELECT count(*) as count FROM fees WHERE status='Pending'", (err, row) => {
+            if (err) return res.status(500).json({ error: err.message });
             stats.feesPending = row ? row.count : 0;
             res.json(stats);
         });
     });
 });
-
 
 // --- COLLEGE INFO ROUTES ---
 app.get('/api/college-info', authenticateToken, (req, res) => {
@@ -450,7 +493,6 @@ app.post('/api/alumni', authenticateToken, upload.single('photo'), (req, res) =>
 app.put('/api/alumni/:id', authenticateToken, upload.single('photo'), (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
     const { name, batch_year, course, department, job_title, company, contact } = req.body;
-    // If a new photo was uploaded, use it; otherwise keep existing
     if (req.file) {
         const photo_url = `/uploads/${req.file.filename}`;
         const stmt = db.prepare("UPDATE alumni SET name=?, batch_year=?, course=?, department=?, job_title=?, company=?, contact=?, photo_url=? WHERE id=?");
@@ -549,7 +591,6 @@ app.put('/api/fees/:id/pay', authenticateToken, (req, res) => {
 
 app.post('/api/fees/remind', authenticateToken, (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
-    // Get all students with pending fees and send them a notification
     db.all(`SELECT DISTINCT f.student_id, s.user_id, s.name, f.amount, f.type
             FROM fees f JOIN students s ON f.student_id = s.id
             WHERE f.status = 'Pending'`, [], (err, rows) => {
@@ -566,11 +607,10 @@ app.post('/api/fees/remind', authenticateToken, (req, res) => {
     });
 });
 
-
 // --- DATA BACKUP ---
 app.get('/api/backup', authenticateToken, (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
-    const dbPath = resolve(__dirname_backup, 'college_v2.db');
+    const dbPath = resolve(__dirname, 'college_v2.db');
     const filename = `college_backup_${new Date().toISOString().split('T')[0]}.db`;
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.setHeader('Content-Type', 'application/octet-stream');

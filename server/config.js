@@ -1,2 +1,2 @@
-export const PORT = process.env.PORT || 5000;
-export const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key_here';
+export const PORT = process.env.PORT || 3000;
+export const SECRET_KEY = process.env.SECRET_KEY || 'your-secret-key-change-in-production';

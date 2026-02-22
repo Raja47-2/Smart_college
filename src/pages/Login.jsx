@@ -21,16 +21,10 @@ const Login = () => {
 
             // Verify role matches selection
             if (user.role !== selectedRole) {
-                if (
-                    (selectedRole === 'admin' && user.role !== 'admin') ||
-                    (selectedRole === 'teacher' && user.role !== 'teacher') ||
-                    (selectedRole === 'student' && user.role !== 'student')
-                ) {
-                    setError(`Access Denied: You are not a ${selectedRole}`);
-                    // Optional: Logout immediately if token was set
-                    // logout(); 
-                    return;
-                }
+                setError(`Access Denied: You are not a ${selectedRole}`);
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                return;
             }
 
             // Redirect based on role

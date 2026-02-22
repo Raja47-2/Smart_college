@@ -54,8 +54,6 @@ function App() {
             <Route path="attendance" element={<Attendance />} />
             <Route path="fees" element={<Fees />} />
             <Route path="fees/add" element={<FeeForm />} />
-            <Route path="fees" element={<Fees />} />
-            <Route path="fees/add" element={<FeeForm />} />
             <Route path="fees/edit/:id" element={<FeeForm />} />
             <Route path="assignments" element={<Assignments />} />
             <Route path="assignments/add" element={<AssignmentForm />} />

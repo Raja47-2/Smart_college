@@ -168,15 +168,14 @@ const StudentForm = () => {
 
                     {!isEditMode && (
                         <div className="form-group">
-                            <label htmlFor="password">Password</label>
+                            <label htmlFor="password">Password (Optional)</label>
                             <input
                                 type="password"
                                 id="password"
                                 name="password"
                                 value={formData.password}
                                 onChange={handleChange}
-                                required
-                                placeholder="Create a password"
+                                placeholder="Default: 123456"
                             />
                         </div>
                     )}

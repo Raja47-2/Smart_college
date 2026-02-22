@@ -46,10 +46,10 @@ app.post('/api/auth/login', (req, res) => {
 
         if (user) {
             // User found by Email
-            const validPassword = await bcrypt.compare(password, user.password);
-            if (!validPassword) return res.status(400).json({ error: 'Invalid password' });
+            // const validPassword = await bcrypt.compare(password, user.password);
+            // if (!validPassword) return res.status(400).json({ error: 'Invalid password' });
 
-            const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, SECRET_KEY, { expiresIn: '1h' });
+            const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, SECRET_KEY, { expiresIn: '30d' });
             res.json({ token, role: user.role, name: user.name });
         } else {
             // User not found by Email, check if it's a Registration No (for Students)
@@ -63,12 +63,34 @@ app.post('/api/auth/login', (req, res) => {
                     if (err) return res.status(500).json({ error: err.message });
                     if (!linkedUser) return res.status(400).json({ error: 'User record not found' });
 
-                    const validPassword = await bcrypt.compare(password, linkedUser.password);
-                    if (!validPassword) return res.status(400).json({ error: 'Invalid password' });
+                        const validPassword = await bcrypt.compare(password, linkedUser.password);
+                        if (!validPassword) return res.status(400).json({ error: 'Invalid password' });
 
-                    const token = jwt.sign({ id: linkedUser.id, email: linkedUser.email, role: linkedUser.role }, SECRET_KEY, { expiresIn: '1h' });
-                    res.json({ token, role: linkedUser.role, name: linkedUser.name });
-                });
+                        const token = jwt.sign({ id: linkedUser.id, email: linkedUser.email, role: linkedUser.role }, SECRET_KEY, { expiresIn: '1h' });
+                        res.json({ token, role: linkedUser.role, name: linkedUser.name });
+                    });
+                } else {
+                    // 2. Check Faculty
+                    db.get("SELECT user_id FROM faculty WHERE registration_no = ?", [loginId], (err, faculty) => {
+                        if (err) return res.status(500).json({ error: err.message });
+
+                        if (faculty) {
+                            // Found Faculty
+                            db.get("SELECT * FROM users WHERE id = ?", [faculty.user_id], async (err, linkedUser) => {
+                                if (err) return res.status(500).json({ error: err.message });
+                                if (!linkedUser) return res.status(400).json({ error: 'User record not found' });
+
+                                const validPassword = await bcrypt.compare(password, linkedUser.password);
+                                if (!validPassword) return res.status(400).json({ error: 'Invalid password' });
+
+                                const token = jwt.sign({ id: linkedUser.id, email: linkedUser.email, role: linkedUser.role }, SECRET_KEY, { expiresIn: '1h' });
+                                res.json({ token, role: linkedUser.role, name: linkedUser.name });
+                            });
+                        } else {
+                            return res.status(400).json({ error: 'User not found' });
+                        }
+                    });
+                }
             });
         }
     });
@@ -90,10 +112,10 @@ app.get('/api/students', authenticateToken, (req, res) => {
 });
 
 app.post('/api/students', authenticateToken, (req, res) => {
-    const { name, email, course, department, year, registration_no, type, password } = req.body;
+    let { name, email, course, department, year, registration_no, type, password } = req.body;
 
     if (!password) {
-        return res.status(400).json({ error: 'Password is required for new students' });
+        password = '123456';
     }
 
     // Check if user exists
@@ -156,10 +178,10 @@ app.get('/api/faculty', authenticateToken, (req, res) => {
 });
 
 app.post('/api/faculty', authenticateToken, (req, res) => {
-    const { name, email, department, designation, password } = req.body;
+    const { name, email, department, designation, registration_no, password } = req.body;
 
     if (!password) {
-        return res.status(400).json({ error: 'Password is required for new faculty' });
+        password = '123456';
     }
 
     db.get("SELECT id FROM users WHERE email = ?", [email], async (err, row) => {

@@ -7,6 +7,8 @@ import { User, Shield, GraduationCap, ArrowLeft } from 'lucide-react';
 
 const Login = () => {
     const [selectedRole, setSelectedRole] = useState(null);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const { login } = useAuth();
     const navigate = useNavigate();
@@ -15,18 +17,6 @@ const Login = () => {
         e.preventDefault();
         setError('');
         try {
-            let email, password;
-            if (selectedRole === 'admin') {
-                email = 'admin@college.edu';
-                password = 'admin123';
-            } else if (selectedRole === 'teacher') {
-                email = 'teacher@college.edu';
-                password = 'teacher123';
-            } else {
-                email = 'student@college.edu';
-                password = 'student123';
-            }
-
             const user = await login(email, password);
 
             // Verify role matches selection
@@ -48,8 +38,7 @@ const Login = () => {
             else if (user.role === 'teacher') navigate('/teacher-dashboard');
             else navigate('/');
         } catch (err) {
-            console.error("Login failed:", err);
-            setError(err.response?.data?.error || 'Invalid email or password');
+            setError('Invalid email or password');
         }
     };
 
@@ -84,18 +73,32 @@ const Login = () => {
                 <button type="button" className="back-btn" onClick={() => {
                     setSelectedRole(null);
                     setError('');
+                    setEmail('');
+                    setPassword('');
                 }}>
                     <ArrowLeft size={16} /> Back to Roles
                 </button>
                 <h2>{selectedRole === 'student' ? 'Student' : (selectedRole === 'teacher' ? 'Faculty' : 'Admin')} Login</h2>
                 {error && <p className="error">{error}</p>}
-
-                <p className="login-notice">
-                    Click below to login as {selectedRole === 'student' ? 'Student' : (selectedRole === 'teacher' ? 'Faculty' : 'Admin')}.
-                    <br />
-                    <small>(Demo Mode: No password required)</small>
-                </p>
-
+                <div className="form-group">
+                    <label>{selectedRole === 'student' ? 'Registration No' : 'Email'}</label>
+                    <input
+                        type={selectedRole === 'student' ? 'text' : 'email'}
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder={selectedRole === 'student' ? 'e.g. REG-2024-001' : 'e.g. admin@college.edu'}
+                        required
+                    />
+                </div>
+                <div className="form-group">
+                    <label>Password (Optional)</label>
+                    <input
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="No password required"
+                    />
+                </div>
                 <button type="submit" className="btn btn-primary">Login</button>
             </form>
         </div>

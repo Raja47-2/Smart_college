@@ -8,40 +8,62 @@
    ============================================ */
 .dashboard-banner {
     position: relative;
-    background: linear-gradient(135deg, #1a1a3e 0%, #0d1b3e 100%);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.18) 0%, rgba(6, 182, 212, 0.12) 100%);
     border: 1px solid rgba(99, 102, 241, 0.25);
     border-radius: 1.25rem;
     padding: 2rem 2.5rem;
     margin-bottom: 2rem;
     overflow: hidden;
+    backdrop-filter: blur(20px);
     animation: fadeIn 0.4s ease both;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
+/* top accent line */
 .dashboard-banner::before {
     content: '';
     position: absolute;
-    right: -60px;
-    top: -60px;
-    width: 280px;
-    height: 280px;
-    background: radial-gradient(circle, rgba(99, 102, 241, 0.2) 0%, transparent 70%);
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #6366f1, #06b6d4, #a78bfa);
+}
+
+/* glowing orb */
+.dashboard-banner::after {
+    content: '';
+    position: absolute;
+    right: -80px;
+    top: -80px;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, transparent 65%);
     pointer-events: none;
 }
 
 .dashboard-banner h2 {
-    font-size: 1.6rem;
+    font-size: 1.75rem;
     font-weight: 800;
     color: #f0f0ff;
-    margin-bottom: 0.3rem;
+    margin-bottom: 0.35rem;
+    background: linear-gradient(135deg, #ffffff, #c7d2fe);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .dashboard-banner p {
-    color: #a0a0c8;
+    color: rgba(165, 180, 252, 0.75);
     font-size: 0.95rem;
+    -webkit-text-fill-color: rgba(165, 180, 252, 0.75);
 }
 
 .dashboard-banner .banner-accent {
-    color: #818cf8;
+    background: linear-gradient(90deg, #a5b4fc, #67e8f9);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 /* ============================================
@@ -55,8 +77,8 @@
 }
 
 .stat-card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 1.1rem;
     padding: 1.5rem;
     backdrop-filter: blur(16px);
@@ -65,9 +87,10 @@
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     animation: scaleIn 0.4s ease both;
     cursor: default;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
-/* top accent bar */
+/* top accent bar per card */
 .stat-card::before {
     content: '';
     position: absolute;
@@ -79,19 +102,20 @@
     background: var(--card-accent, linear-gradient(90deg, #6366f1, #06b6d4));
 }
 
-/* shine effect on hover */
+/* subtle inner glow */
 .stat-card::after {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, transparent 60%);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, transparent 60%);
     opacity: 0;
     transition: opacity 0.3s;
 }
 
 .stat-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    transform: translateY(-6px);
+    border-color: rgba(99, 102, 241, 0.3);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(99, 102, 241, 0.1);
 }
 
 .stat-card:hover::after {
@@ -101,36 +125,38 @@
 .stat-icon {
     width: 50px;
     height: 50px;
-    border-radius: 12px;
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 1.25rem;
     transition: transform 0.3s;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .stat-card:hover .stat-icon {
-    transform: scale(1.1) rotate(-5deg);
+    transform: scale(1.15) rotate(-6deg);
 }
 
 .stat-info h3 {
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: 0.72rem;
+    font-weight: 700;
     color: var(--text-muted);
     text-transform: uppercase;
-    letter-spacing: 0.07em;
-    margin-bottom: 0.4rem;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.5rem;
 }
 
 .stat-info p {
-    font-size: 2rem;
+    font-size: 2.1rem;
     font-weight: 800;
-    color: var(--text-primary);
+    color: var(--card-color, #a5b4fc);
     line-height: 1;
     animation: countUp 0.6s ease both;
+    text-shadow: 0 0 20px var(--card-color, rgba(99, 102, 241, 0.5));
 }
 
-/* stagger each card */
+/* stagger */
 .stat-card:nth-child(1) {
     animation-delay: 0.05s;
 }
@@ -163,6 +189,7 @@
     padding: 1.5rem;
     backdrop-filter: blur(16px);
     animation: fadeIn 0.5s 0.2s ease both;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .recent-activity h3 {

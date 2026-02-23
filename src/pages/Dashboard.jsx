@@ -5,11 +5,12 @@ import { useAuth } from '../context/AuthContext';
 import './Dashboard.css';
 
 const CARDS = [
-    { key: 'students', title: 'Total Students', icon: Users, color: '#6366f1', accent: 'linear-gradient(90deg, #6366f1, #818cf8)' },
-    { key: 'faculty', title: 'Faculty Members', icon: GraduationCap, color: '#10b981', accent: 'linear-gradient(90deg, #10b981, #34d399)' },
-    { key: 'attendance', title: "Today's Attendance", icon: CalendarCheck, color: '#f59e0b', accent: 'linear-gradient(90deg, #f59e0b, #fbbf24)' },
-    { key: 'feesPending', title: 'Fees Pending', icon: Wallet, color: '#ef4444', accent: 'linear-gradient(90deg, #ef4444, #f87171)' },
+    { key: 'totalStudents', title: 'Total Students', icon: Users, color: '#6366f1', accent: 'linear-gradient(90deg, #4f46e5, #6366f1)' },
+    { key: 'totalFaculty', title: 'Faculty Members', icon: GraduationCap, color: '#8b5cf6', accent: 'linear-gradient(90deg, #7c3aed, #8b5cf6)' },
+    { key: 'totalAssignments', title: 'Assignments', icon: CalendarCheck, color: '#06b6d4', accent: 'linear-gradient(90deg, #0891b2, #06b6d4)' },
+    { key: 'totalFees', title: 'Total Fees (₹)', icon: Wallet, color: '#3b82f6', accent: 'linear-gradient(90deg, #2563eb, #3b82f6)' },
 ];
+
 
 const Dashboard = () => {
     const { user } = useAuth();
@@ -39,13 +40,13 @@ const Dashboard = () => {
             {/* Stat Cards */}
             <div className="stats-grid">
                 {CARDS.map(({ key, title, icon: Icon, color, accent }) => (
-                    <div className="stat-card" key={key} style={{ '--card-accent': accent }}>
-                        <div className="stat-icon" style={{ backgroundColor: `${color}20`, color }}>
+                    <div className="stat-card" key={key} style={{ '--card-accent': accent, '--card-color': color }}>
+                        <div className="stat-icon" style={{ backgroundColor: `${color}22`, color }}>
                             <Icon size={24} />
                         </div>
                         <div className="stat-info">
                             <h3>{title}</h3>
-                            <p>{key === 'attendance' ? `${stats[key] || 0}%` : stats[key]}</p>
+                            <p>{key === 'totalFees' ? `₹${stats[key] || 0}` : (stats[key] || 0)}</p>
                         </div>
                     </div>
                 ))}

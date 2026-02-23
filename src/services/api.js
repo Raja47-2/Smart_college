@@ -89,40 +89,176 @@ export const logoutUser = () => {
     localStorage.removeItem('user');
 };
 
-// Students
-export const getStudents = () => api.get('/students').then(res => res.data);
-export const addStudent = (data) => api.post('/students', data).then(res => res.data);
-export const updateStudent = (id, data) => api.put(`/students/${id}`, data).then(res => res.data);
-export const deleteStudent = (id) => api.delete(`/students/${id}`).then(res => res.data);
+// ─── localStorage helpers ─────────────────────────────────────────────────────
+const getDB = () => JSON.parse(localStorage.getItem('smart_college_db') || '{}');
+const saveDB = (db) => localStorage.setItem('smart_college_db', JSON.stringify(db));
+const genId = () => Date.now() + Math.floor(Math.random() * 1000);
 
-// Faculty
-export const getFaculty = () => api.get('/faculty').then(res => res.data);
-export const addFaculty = (data) => api.post('/faculty', data).then(res => res.data);
-export const updateFaculty = (id, data) => api.put(`/faculty/${id}`, data).then(res => res.data);
-export const deleteFaculty = (id) => api.delete(`/faculty/${id}`).then(res => res.data);
+// ─── Students ─────────────────────────────────────────────────────────────────
+export const getStudents = async () => {
+    return (getDB().students || []);
+};
+export const addStudent = async (data) => {
+    const db = getDB();
+    db.students = db.students || [];
+    const student = { ...data, id: genId(), createdAt: new Date().toISOString() };
+    db.students.push(student);
+    saveDB(db);
+    return student;
+};
+export const updateStudent = async (id, data) => {
+    const db = getDB();
+    db.students = (db.students || []).map(s =>
+        String(s.id) === String(id) ? { ...s, ...data } : s
+    );
+    saveDB(db);
+    return data;
+};
+export const deleteStudent = async (id) => {
+    const db = getDB();
+    db.students = (db.students || []).filter(s => String(s.id) !== String(id));
+    saveDB(db);
+};
 
-// Attendance
-export const getAttendance = () => api.get('/attendance').then(res => res.data);
-export const saveAttendance = (date, records) => api.post('/attendance', { date, records }).then(res => res.data);
+// ─── Faculty ──────────────────────────────────────────────────────────────────
+export const getFaculty = async () => {
+    return (getDB().faculty || []);
+};
+export const addFaculty = async (data) => {
+    const db = getDB();
+    db.faculty = db.faculty || [];
+    const member = { ...data, id: genId(), createdAt: new Date().toISOString() };
+    db.faculty.push(member);
+    saveDB(db);
+    return member;
+};
+export const updateFaculty = async (id, data) => {
+    const db = getDB();
+    db.faculty = (db.faculty || []).map(f =>
+        String(f.id) === String(id) ? { ...f, ...data } : f
+    );
+    saveDB(db);
+    return data;
+};
+export const deleteFaculty = async (id) => {
+    const db = getDB();
+    db.faculty = (db.faculty || []).filter(f => String(f.id) !== String(id));
+    saveDB(db);
+};
 
-// Fees
-export const getFees = () => api.get('/fees').then(res => res.data);
-export const addFee = (data) => api.post('/fees', data).then(res => res.data);
-export const updateFee = (id, data) => api.put(`/fees/${id}`, data).then(res => res.data);
-export const deleteFee = (id) => api.delete(`/fees/${id}`).then(res => res.data);
+// ─── Attendance ───────────────────────────────────────────────────────────────
+export const getAttendance = async () => (getDB().attendance || []);
+export const saveAttendance = async (date, records) => {
+    const db = getDB();
+    db.attendance = db.attendance || [];
+    // Remove existing entry for same date then add new
+    db.attendance = db.attendance.filter(a => a.date !== date);
+    db.attendance.push({ date, records, savedAt: new Date().toISOString() });
+    saveDB(db);
+};
 
-// Assignments
-export const getAssignments = () => api.get('/assignments').then(res => res.data);
-export const createAssignment = (data) => api.post('/assignments', data).then(res => res.data);
-export const submitAssignment = (id, data) => api.post(`/assignments/${id}/submit`, data).then(res => res.data);
-export const getSubmissions = (id) => api.get(`/assignments/${id}/submissions`).then(res => res.data);
+// ─── Fees ─────────────────────────────────────────────────────────────────────
+export const getFees = async () => (getDB().fees || []);
+export const addFee = async (data) => {
+    const db = getDB();
+    db.fees = db.fees || [];
+    const fee = { ...data, id: genId(), createdAt: new Date().toISOString() };
+    db.fees.push(fee);
+    saveDB(db);
+    return fee;
+};
+export const updateFee = async (id, data) => {
+    const db = getDB();
+    db.fees = (db.fees || []).map(f =>
+        String(f.id) === String(id) ? { ...f, ...data } : f
+    );
+    saveDB(db);
+    return data;
+};
+export const deleteFee = async (id) => {
+    const db = getDB();
+    db.fees = (db.fees || []).filter(f => String(f.id) !== String(id));
+    saveDB(db);
+};
 
-// Notifications
-export const getNotifications = () => api.get('/notifications').then(res => res.data);
-export const sendNotification = (data) => api.post('/notifications', data).then(res => res.data);
-export const markNotificationRead = (id) => api.put(`/notifications/${id}/read`).then(res => res.data);
+// ─── Assignments ──────────────────────────────────────────────────────────────
+export const getAssignments = async () => (getDB().assignments || []);
+export const createAssignment = async (data) => {
+    const db = getDB();
+    db.assignments = db.assignments || [];
+    const assignment = { ...data, id: genId(), submissions: [], createdAt: new Date().toISOString() };
+    db.assignments.push(assignment);
+    saveDB(db);
+    return assignment;
+};
+export const submitAssignment = async (id, data) => {
+    const db = getDB();
+    db.assignments = (db.assignments || []).map(a => {
+        if (String(a.id) === String(id)) {
+            return { ...a, submissions: [...(a.submissions || []), { ...data, submittedAt: new Date().toISOString() }] };
+        }
+        return a;
+    });
+    saveDB(db);
+};
+export const getSubmissions = async (id) => {
+    const assignments = getDB().assignments || [];
+    const found = assignments.find(a => String(a.id) === String(id));
+    return found ? found.submissions || [] : [];
+};
 
-// Dashboard
-export const getDashboardStats = () => api.get('/dashboard/stats').then(res => res.data);
+// ─── Notifications ────────────────────────────────────────────────────────────
+export const getNotifications = async () => (getDB().notifications || []);
+export const sendNotification = async (data) => {
+    const db = getDB();
+    db.notifications = db.notifications || [];
+    const notif = { ...data, id: genId(), read: false, createdAt: new Date().toISOString() };
+    db.notifications.unshift(notif);
+    saveDB(db);
+    return notif;
+};
+export const markNotificationRead = async (id) => {
+    const db = getDB();
+    db.notifications = (db.notifications || []).map(n =>
+        String(n.id) === String(id) ? { ...n, read: true } : n
+    );
+    saveDB(db);
+};
+
+// ─── Dashboard ────────────────────────────────────────────────────────────────
+export const getDashboardStats = async () => {
+    const db = getDB();
+    return {
+        totalStudents: (db.students || []).length,
+        totalFaculty: (db.faculty || []).length,
+        totalFees: (db.fees || []).reduce((sum, f) => sum + (Number(f.amount) || 0), 0),
+        totalAssignments: (db.assignments || []).length,
+    };
+};
+
+// ─── Teacher Permissions ──────────────────────────────────────────────────────
+export const ALL_PERMISSIONS = [
+    { key: 'manage_students', label: 'Manage Students' },
+    { key: 'manage_fees', label: 'Manage Fees' },
+    { key: 'manage_attendance', label: 'Manage Attendance' },
+    { key: 'manage_assignments', label: 'Manage Assignments' },
+    { key: 'manage_online_classes', label: 'Online Classes' },
+    { key: 'view_analytics', label: 'View Analytics' },
+    { key: 'manage_notifications', label: 'Notifications' },
+    { key: 'view_reports', label: 'Attendance Reports' },
+];
+
+export const getTeacherPermissions = (teacherId) => {
+    const db = getDB();
+    const perms = db.teacher_permissions || {};
+    return perms[String(teacherId)] || {};
+};
+
+export const setTeacherPermissions = (teacherId, permissions) => {
+    const db = getDB();
+    db.teacher_permissions = db.teacher_permissions || {};
+    db.teacher_permissions[String(teacherId)] = permissions;
+    saveDB(db);
+};
 
 export default api;

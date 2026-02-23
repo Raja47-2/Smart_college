@@ -25,6 +25,8 @@ import Alumni from './pages/Alumni';
 import Contact from './pages/Contact';
 import Backup from './pages/Backup';
 import AttendanceReport from './pages/AttendanceReport';
+import OnlineClasses from './pages/OnlineClasses';
+import Permissions from './pages/Permissions';
 
 import { AuthProvider } from './context/AuthContext';
 import Login from './pages/Login';
@@ -66,6 +68,8 @@ function App() {
             <Route path="contact" element={<Contact />} />
             <Route path="backup" element={<Backup />} />
             <Route path="attendance-report" element={<AttendanceReport />} />
+            <Route path="online-classes" element={<OnlineClasses />} />
+            <Route path="permissions" element={<Permissions />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>

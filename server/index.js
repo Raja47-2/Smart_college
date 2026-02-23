@@ -45,63 +45,63 @@ const authenticateToken = (req, res, next) => {
 };
 
 // --- AUTH ROUTES ---
+function resolveLinkedUser(res, userId, password) {
+    db.get("SELECT * FROM users WHERE id = ?", [userId], async (err, user) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (!user) return res.status(400).json({ error: 'User account not found' });
+        try {
+            const validPassword = await bcrypt.compare(password, user.password);
+            if (!validPassword) return res.status(400).json({ error: 'Invalid password' });
+            const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, SECRET_KEY, { expiresIn: '30d' });
+            return res.json({ token, role: user.role, name: user.name });
+        } catch (e) {
+            return res.status(500).json({ error: 'Authentication error' });
+        }
+    });
+}
+
 app.post('/api/auth/login', (req, res) => {
     const { email, password, identifier } = req.body;
-    const loginId = identifier || email; // Support both fields
+    const loginId = identifier || email;
 
-    // Try to find user by Email first (common case)
+    if (!loginId || !password) {
+        return res.status(400).json({ error: 'Email/Registration number and password are required' });
+    }
+
+    // Step 1: Try email
     db.get("SELECT * FROM users WHERE email = ?", [loginId], async (err, user) => {
         if (err) return res.status(500).json({ error: err.message });
 
         if (user) {
-            // User found by Email
-            const validPassword = await bcrypt.compare(password, user.password);
-            if (!validPassword) return res.status(400).json({ error: 'Invalid password' });
+            try {
+                const validPassword = await bcrypt.compare(password, user.password);
+                if (!validPassword) return res.status(400).json({ error: 'Invalid password' });
+                const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, SECRET_KEY, { expiresIn: '30d' });
+                return res.json({ token, role: user.role, name: user.name });
+            } catch (e) {
+                return res.status(500).json({ error: 'Authentication error' });
+            }
+        }
 
-            const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, SECRET_KEY, { expiresIn: '30d' });
-            res.json({ token, role: user.role, name: user.name });
-        } else {
-            // User not found by Email, check if it's a Registration No
-            // 1. Check Students first
-            db.get("SELECT user_id FROM students WHERE registration_no = ?", [loginId], (err, student) => {
+        // Step 2: Try student registration number
+        db.get("SELECT user_id FROM students WHERE registration_no = ?", [loginId], (err, student) => {
+            if (err) return res.status(500).json({ error: err.message });
+
+            if (student) {
+                return resolveLinkedUser(res, student.user_id, password);
+            }
+
+            // Step 3: Try faculty registration number
+            db.get("SELECT user_id FROM faculty WHERE registration_no = ?", [loginId], (err, faculty) => {
                 if (err) return res.status(500).json({ error: err.message });
 
-                if (student) {
-                    // Found Student — get linked user
-                    db.get("SELECT * FROM users WHERE id = ?", [student.user_id], async (err, linkedUser) => {
-                        if (err) return res.status(500).json({ error: err.message });
-                        if (!linkedUser) return res.status(400).json({ error: 'User record not found' });
-
-                        const validPassword = await bcrypt.compare(password, linkedUser.password);
-                        if (!validPassword) return res.status(400).json({ error: 'Invalid password' });
-
-                        const token = jwt.sign({ id: linkedUser.id, email: linkedUser.email, role: linkedUser.role }, SECRET_KEY, { expiresIn: '30d' });
-                        res.json({ token, role: linkedUser.role, name: linkedUser.name });
-                    });
-                } else {
-                    // 2. Check Faculty
-                    db.get("SELECT user_id FROM faculty WHERE registration_no = ?", [loginId], (err, faculty) => {
-                        if (err) return res.status(500).json({ error: err.message });
-
-                        if (faculty) {
-                            // Found Faculty
-                            db.get("SELECT * FROM users WHERE id = ?", [faculty.user_id], async (err, linkedUser) => {
-                                if (err) return res.status(500).json({ error: err.message });
-                                if (!linkedUser) return res.status(400).json({ error: 'User record not found' });
-
-                                const validPassword = await bcrypt.compare(password, linkedUser.password);
-                                if (!validPassword) return res.status(400).json({ error: 'Invalid password' });
-
-                                const token = jwt.sign({ id: linkedUser.id, email: linkedUser.email, role: linkedUser.role }, SECRET_KEY, { expiresIn: '30d' });
-                                res.json({ token, role: linkedUser.role, name: linkedUser.name });
-                            });
-                        } else {
-                            return res.status(400).json({ error: 'User not found' });
-                        }
-                    });
+                if (faculty) {
+                    return resolveLinkedUser(res, faculty.user_id, password);
                 }
+
+                return res.status(400).json({ error: 'No account found with this email or registration number' });
             });
-        }
+        });
     });
 });
 

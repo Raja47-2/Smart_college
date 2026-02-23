@@ -32,11 +32,8 @@ const Login = () => {
             else if (user.role === 'teacher') navigate('/teacher-dashboard');
             else navigate('/');
         } catch (err) {
-            if (selectedRole === 'student') {
-                setError('Invalid Registration Number or password. Check your registration number and try again.');
-            } else {
-                setError('Invalid email or password. Please check your credentials.');
-            }
+            const serverMsg = err.response?.data?.error;
+            setError(serverMsg || 'Login failed. Please check your credentials.');
         }
     };
 
@@ -103,8 +100,9 @@ const Login = () => {
                         placeholder={
                             selectedRole === 'admin'
                                 ? 'Default: admin123'
-                                : 'Enter your password (if set)'
+                                : 'Enter your password'
                         }
+                        required
                     />
                 </div>
                 <button type="submit" className="btn btn-primary">Login</button>

@@ -213,6 +213,28 @@
     border-color: rgba(245, 158, 11, 0.3);
 }
 
+/* Principal card */
+.role-card.principal {
+    animation-delay: 0.2s;
+}
+
+.role-card.principal:hover {
+    box-shadow: 0 20px 40px rgba(6, 182, 212, 0.25);
+}
+
+.role-card.principal::before {
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(6, 182, 212, 0.05));
+}
+
+.role-card.principal .role-icon {
+    background: rgba(6, 182, 212, 0.15);
+    color: #22d3ee;
+}
+
+.role-card.principal:hover {
+    border-color: rgba(6, 182, 212, 0.3);
+}
+
 /* ============================================
    LOGIN FORM
    ============================================ */

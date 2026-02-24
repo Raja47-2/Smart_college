@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Plus, Edit2, Trash2, Phone, Mail, X, Save } from 'lucide-react';
-import axios from 'axios';
+import { getStaffContacts, addStaffContact, deleteStaffContact } from '../services/api';
 import './Contact.css';
-
-const API = 'http://localhost:5000/api';
 const empty = { name: '', department: '', designation: '', phone: '', email: '' };
 
 const Contact = () => {
@@ -14,15 +12,14 @@ const Contact = () => {
     const [form, setForm] = useState(empty);
     const [editId, setEditId] = useState(null);
     const [loading, setLoading] = useState(true);
-    const token = localStorage.getItem('token');
-    const isAdmin = user?.role === 'admin';
+    const isAdmin = user?.role === 'admin' || user?.role === 'principal';
 
     useEffect(() => { load(); }, []);
 
     const load = async () => {
         try {
-            const res = await axios.get(`${API}/staff-contacts`, { headers: { Authorization: `Bearer ${token}` } });
-            setContacts(res.data);
+            const data = await getStaffContacts();
+            setContacts(data);
         } catch (e) { console.error(e); }
         finally { setLoading(false); }
     };
@@ -33,9 +30,12 @@ const Contact = () => {
     const handleSave = async () => {
         try {
             if (editId) {
-                await axios.put(`${API}/staff-contacts/${editId}`, form, { headers: { Authorization: `Bearer ${token}` } });
+                const axios = (await import('axios')).default;
+                await axios.put(`http://localhost:5000/api/staff-contacts/${editId}`, form, {
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                });
             } else {
-                await axios.post(`${API}/staff-contacts`, form, { headers: { Authorization: `Bearer ${token}` } });
+                await addStaffContact(form);
             }
             setShowForm(false); load();
         } catch (e) { alert('Error: ' + (e.response?.data?.error || e.message)); }
@@ -43,8 +43,10 @@ const Contact = () => {
 
     const handleDelete = async (id) => {
         if (!window.confirm('Delete this contact?')) return;
-        await axios.delete(`${API}/staff-contacts/${id}`, { headers: { Authorization: `Bearer ${token}` } });
-        load();
+        try {
+            await deleteStaffContact(id);
+            load();
+        } catch (e) { alert('Error: ' + e.message); }
     };
 
     // Group by department

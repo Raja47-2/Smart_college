@@ -1,0 +1,50 @@
+.sp-search-bar {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--text-muted);
+}
+
+.sp-search-bar input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-primary);
+    width: 100%;
+    font-size: 0.95rem;
+}
+
+.perm-avatar.student {
+    background: linear-gradient(135deg, var(--accent-color), #818cf8);
+}
+
+.perm-progress-fill.student {
+    background: var(--accent-color);
+}
+
+.sp-page .perm-card {
+    transition: transform 0.2s, border-color 0.2s;
+}
+
+.sp-page .perm-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent-color);
+}
+
+.perm-teacher-info small {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    margin-top: 2px;
+}
+
+@media (max-width: 768px) {
+    .sp-search-bar {
+        margin-bottom: 1.5rem;
+    }
+}

@@ -66,7 +66,7 @@ const About = () => {
                     <div key={field.key} className={`about-card ${field.type === 'textarea' ? 'full-width' : ''}`}>
                         <div className="card-header">
                             <h3>{field.label}</h3>
-                            {user?.role === 'admin' && editKey !== field.key && (
+                            {(user?.role === 'admin' || user?.role === 'principal') && editKey !== field.key && (
                                 <button className="icon-btn edit" onClick={() => startEdit(field.key)}>
                                     <Edit2 size={16} />
                                 </button>

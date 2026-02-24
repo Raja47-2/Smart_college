@@ -6,234 +6,164 @@ const api = axios.create({
     baseURL: API_URL,
 });
 
-api.interceptors.request.use((config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-});
+// No token interceptor — auth removed
 
-// ─── Local Storage-based Authentication (no backend needed) ───────────────────
-const HARDCODED_ADMIN = {
-    email: 'admin@college.edu',
-    password: 'admin123',
-    role: 'admin',
-    name: 'Admin',
-};
+// ─── Authentication (no token, just user object in localStorage) ──────────────
+const API = 'http://localhost:5000/api';
+const tok = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
 
+// ─── Authentication ──────────────
 export const loginUser = async (identifier, password) => {
-    const id = (identifier || '').trim();
-    const pwd = (password || '').trim();
-
-    // 1. Check hardcoded admin account
-    if (
-        (id === HARDCODED_ADMIN.email) &&
-        (pwd === '' || pwd === HARDCODED_ADMIN.password)
-    ) {
-        const userData = { ...HARDCODED_ADMIN, token: 'local-admin-token', id: 'admin-001' };
-        delete userData.password;
-        localStorage.setItem('token', userData.token);
-        localStorage.setItem('user', JSON.stringify(userData));
-        return userData;
-    }
-
-    // 2. Check faculty stored in localStorage
-    const db = JSON.parse(localStorage.getItem('smart_college_db') || '{}');
-    const faculty = db.faculty || [];
-    const matchedFaculty = faculty.find(
-        (f) =>
-            f.email &&
-            f.email.toLowerCase() === id.toLowerCase() &&
-            (pwd === '' || f.password === pwd || !f.password)
-    );
-    if (matchedFaculty) {
-        const userData = {
-            id: matchedFaculty.id,
-            name: matchedFaculty.name,
-            email: matchedFaculty.email,
-            role: 'teacher',
-            token: 'local-teacher-token-' + matchedFaculty.id,
-        };
-        localStorage.setItem('token', userData.token);
-        localStorage.setItem('user', JSON.stringify(userData));
-        return userData;
-    }
-
-    // 3. Check students stored in localStorage (by registration number)
-    const students = db.students || [];
-    const matchedStudent = students.find(
-        (s) =>
-            (s.registrationNumber && s.registrationNumber === id) &&
-            (pwd === '' || s.password === pwd || !s.password)
-    );
-    if (matchedStudent) {
-        const userData = {
-            id: matchedStudent.id,
-            name: matchedStudent.name,
-            email: matchedStudent.email || id,
-            role: 'student',
-            token: 'local-student-token-' + matchedStudent.id,
-        };
-        localStorage.setItem('token', userData.token);
-        localStorage.setItem('user', JSON.stringify(userData));
-        return userData;
-    }
-
-    // No match found
-    throw new Error('Invalid credentials');
+    const res = await axios.post(`${API}/auth/login`, { identifier, password });
+    const userData = {
+        id: res.data.id,
+        name: res.data.name,
+        email: res.data.email,
+        role: res.data.role,
+    };
+    localStorage.setItem('user', JSON.stringify(userData));
+    return userData;
 };
 
 export const logoutUser = () => {
-    localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('token');
 };
-
-// ─── localStorage helpers ─────────────────────────────────────────────────────
-const getDB = () => JSON.parse(localStorage.getItem('smart_college_db') || '{}');
-const saveDB = (db) => localStorage.setItem('smart_college_db', JSON.stringify(db));
-const genId = () => Date.now() + Math.floor(Math.random() * 1000);
 
 // ─── Students ─────────────────────────────────────────────────────────────────
 export const getStudents = async () => {
-    return (getDB().students || []);
+    const res = await axios.get(`${API}/students`, tok());
+    return res.data;
 };
-export const addStudent = async (data) => {
-    const db = getDB();
-    db.students = db.students || [];
-    const student = { ...data, id: genId(), createdAt: new Date().toISOString() };
-    db.students.push(student);
-    saveDB(db);
-    return student;
+export const addStudent = async (formData) => {
+    const res = await axios.post(`${API}/students`, formData, {
+        headers: { ...tok().headers, 'Content-Type': 'multipart/form-data' }
+    });
+    return res.data;
 };
-export const updateStudent = async (id, data) => {
-    const db = getDB();
-    db.students = (db.students || []).map(s =>
-        String(s.id) === String(id) ? { ...s, ...data } : s
-    );
-    saveDB(db);
-    return data;
+export const updateStudent = async (id, formData) => {
+    const res = await axios.put(`${API}/students/${id}`, formData, {
+        headers: { ...tok().headers, 'Content-Type': 'multipart/form-data' }
+    });
+    return res.data;
 };
 export const deleteStudent = async (id) => {
-    const db = getDB();
-    db.students = (db.students || []).filter(s => String(s.id) !== String(id));
-    saveDB(db);
+    await axios.delete(`${API}/students/${id}`, tok());
 };
 
 // ─── Faculty ──────────────────────────────────────────────────────────────────
 export const getFaculty = async () => {
-    return (getDB().faculty || []);
+    const res = await axios.get(`${API}/faculty`, tok());
+    return res.data;
 };
 export const addFaculty = async (data) => {
-    const db = getDB();
-    db.faculty = db.faculty || [];
-    const member = { ...data, id: genId(), createdAt: new Date().toISOString() };
-    db.faculty.push(member);
-    saveDB(db);
-    return member;
+    const res = await axios.post(`${API}/faculty`, data, tok());
+    return res.data;
 };
 export const updateFaculty = async (id, data) => {
-    const db = getDB();
-    db.faculty = (db.faculty || []).map(f =>
-        String(f.id) === String(id) ? { ...f, ...data } : f
-    );
-    saveDB(db);
-    return data;
+    const res = await axios.put(`${API}/faculty/${id}`, data, tok());
+    return res.data;
 };
 export const deleteFaculty = async (id) => {
-    const db = getDB();
-    db.faculty = (db.faculty || []).filter(f => String(f.id) !== String(id));
-    saveDB(db);
+    await axios.delete(`${API}/faculty/${id}`, tok());
 };
 
 // ─── Attendance ───────────────────────────────────────────────────────────────
-export const getAttendance = async () => (getDB().attendance || []);
+export const getAttendance = async () => {
+    const res = await axios.get(`${API}/attendance`, tok());
+    return res.data;
+};
 export const saveAttendance = async (date, records) => {
-    const db = getDB();
-    db.attendance = db.attendance || [];
-    // Remove existing entry for same date then add new
-    db.attendance = db.attendance.filter(a => a.date !== date);
-    db.attendance.push({ date, records, savedAt: new Date().toISOString() });
-    saveDB(db);
+    await axios.post(`${API}/attendance`, { date, records }, tok());
+};
+export const getAttendanceReport = async (startDate, endDate) => {
+    const res = await axios.get(`${API}/attendance/report`, { ...tok(), params: { startDate, endDate } });
+    return res.data;
+};
+export const getLowAttendanceAlerts = async (threshold = 75) => {
+    const res = await axios.get(`${API}/attendance/low-alert`, { ...tok(), params: { threshold } });
+    return res.data;
+};
+export const sendAttendanceSMS = async (data) => {
+    const res = await axios.post(`${API}/attendance/send-sms`, data, tok());
+    return res.data;
+};
+export const sendBulkAttendanceSMS = async (threshold, apiKey) => {
+    const res = await axios.post(`${API}/attendance/send-sms-bulk`, { threshold, api_key: apiKey }, tok());
+    return res.data;
 };
 
 // ─── Fees ─────────────────────────────────────────────────────────────────────
-export const getFees = async () => (getDB().fees || []);
+export const getFees = async () => {
+    const res = await axios.get(`${API}/fees`, tok());
+    return res.data;
+};
 export const addFee = async (data) => {
-    const db = getDB();
-    db.fees = db.fees || [];
-    const fee = { ...data, id: genId(), createdAt: new Date().toISOString() };
-    db.fees.push(fee);
-    saveDB(db);
-    return fee;
+    const res = await axios.post(`${API}/fees`, data, tok());
+    return res.data;
 };
 export const updateFee = async (id, data) => {
-    const db = getDB();
-    db.fees = (db.fees || []).map(f =>
-        String(f.id) === String(id) ? { ...f, ...data } : f
-    );
-    saveDB(db);
-    return data;
+    const res = await axios.put(`${API}/fees/${id}`, data, tok());
+    return res.data;
 };
 export const deleteFee = async (id) => {
-    const db = getDB();
-    db.fees = (db.fees || []).filter(f => String(f.id) !== String(id));
-    saveDB(db);
+    await axios.delete(`${API}/fees/${id}`, tok());
+};
+export const markFeePaid = async (id) => {
+    await axios.put(`${API}/fees/${id}/pay`, {}, tok());
+};
+export const sendFeeReminders = async () => {
+    const res = await axios.post(`${API}/fees/remind`, {}, tok());
+    return res.data;
 };
 
 // ─── Assignments ──────────────────────────────────────────────────────────────
-export const getAssignments = async () => (getDB().assignments || []);
+export const getAssignments = async () => {
+    const res = await axios.get(`${API}/assignments`, tok());
+    return res.data;
+};
 export const createAssignment = async (data) => {
-    const db = getDB();
-    db.assignments = db.assignments || [];
-    const assignment = { ...data, id: genId(), submissions: [], createdAt: new Date().toISOString() };
-    db.assignments.push(assignment);
-    saveDB(db);
-    return assignment;
+    const res = await axios.post(`${API}/assignments`, data, tok());
+    return res.data;
 };
 export const submitAssignment = async (id, data) => {
-    const db = getDB();
-    db.assignments = (db.assignments || []).map(a => {
-        if (String(a.id) === String(id)) {
-            return { ...a, submissions: [...(a.submissions || []), { ...data, submittedAt: new Date().toISOString() }] };
-        }
-        return a;
-    });
-    saveDB(db);
+    await axios.post(`${API}/assignments/${id}/submit`, data, tok());
 };
 export const getSubmissions = async (id) => {
-    const assignments = getDB().assignments || [];
-    const found = assignments.find(a => String(a.id) === String(id));
-    return found ? found.submissions || [] : [];
+    const res = await axios.get(`${API}/assignments/${id}/submissions`, tok());
+    return res.data;
 };
 
 // ─── Notifications ────────────────────────────────────────────────────────────
-export const getNotifications = async () => (getDB().notifications || []);
+export const getNotifications = async () => {
+    const res = await axios.get(`${API}/notifications`, tok());
+    return res.data;
+};
 export const sendNotification = async (data) => {
-    const db = getDB();
-    db.notifications = db.notifications || [];
-    const notif = { ...data, id: genId(), read: false, createdAt: new Date().toISOString() };
-    db.notifications.unshift(notif);
-    saveDB(db);
-    return notif;
+    const res = await axios.post(`${API}/notifications`, data, tok());
+    return res.data;
 };
 export const markNotificationRead = async (id) => {
-    const db = getDB();
-    db.notifications = (db.notifications || []).map(n =>
-        String(n.id) === String(id) ? { ...n, read: true } : n
-    );
-    saveDB(db);
+    await axios.put(`${API}/notifications/${id}/read`, {}, tok());
 };
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 export const getDashboardStats = async () => {
-    const db = getDB();
-    return {
-        totalStudents: (db.students || []).length,
-        totalFaculty: (db.faculty || []).length,
-        totalFees: (db.fees || []).reduce((sum, f) => sum + (Number(f.amount) || 0), 0),
-        totalAssignments: (db.assignments || []).length,
-    };
+    const res = await axios.get(`${API}/dashboard/stats`, tok());
+    return res.data;
+};
+
+// ─── Online Classes ───────────────────────────────────────────────────────────
+export const getOnlineClasses = async () => {
+    const res = await axios.get(`${API}/online-classes`, tok());
+    return res.data;
+};
+export const addOnlineClass = async (data) => {
+    const res = await axios.post(`${API}/online-classes`, data, tok());
+    return res.data;
+};
+export const deleteOnlineClass = async (id) => {
+    await axios.delete(`${API}/online-classes/${id}`, tok());
 };
 
 // ─── Teacher Permissions ──────────────────────────────────────────────────────
@@ -246,19 +176,90 @@ export const ALL_PERMISSIONS = [
     { key: 'view_analytics', label: 'View Analytics' },
     { key: 'manage_notifications', label: 'Notifications' },
     { key: 'view_reports', label: 'Attendance Reports' },
+    { key: 'delegate_permissions', label: 'Delegate Permissions' },
 ];
 
-export const getTeacherPermissions = (teacherId) => {
-    const db = getDB();
-    const perms = db.teacher_permissions || {};
-    return perms[String(teacherId)] || {};
+export const getTeacherPermissions = async (teacherId) => {
+    const res = await axios.get(`${API}/teacher-permissions/${teacherId}`, tok());
+    return res.data || {};
 };
 
-export const setTeacherPermissions = (teacherId, permissions) => {
-    const db = getDB();
-    db.teacher_permissions = db.teacher_permissions || {};
-    db.teacher_permissions[String(teacherId)] = permissions;
-    saveDB(db);
+export const setTeacherPermissions = async (teacherId, permissions) => {
+    await axios.post(`${API}/teacher-permissions/${teacherId}`, { permissions }, tok());
+};
+
+export const getStudentPermissionsAll = async () => {
+    const res = await axios.get(`${API}/student-permissions/all`, tok());
+    return res.data || {};
+};
+
+export const getStudentPermissions = async (studentId) => {
+    const res = await axios.get(`${API}/student-permissions/${studentId}`, tok());
+    return res.data || {};
+};
+
+export const setStudentPermissions = async (studentId, permissions) => {
+    await axios.post(`${API}/student-permissions/${studentId}`, { permissions }, tok());
+};
+
+// ─── Alumni ───────────────────────────────────────────────────────────────────
+export const getAlumni = async () => {
+    const res = await axios.get(`${API}/alumni`, tok());
+    return res.data;
+};
+export const addAlumni = async (formData) => {
+    const res = await axios.post(`${API}/alumni`, formData, {
+        headers: { ...tok().headers, 'Content-Type': 'multipart/form-data' }
+    });
+    return res.data;
+};
+export const deleteAlumni = async (id) => {
+    await axios.delete(`${API}/alumni/${id}`, tok());
+};
+
+// ─── Staff Contacts ───────────────────────────────────────────────────────────
+export const getStaffContacts = async () => {
+    const res = await axios.get(`${API}/staff-contacts`, tok());
+    return res.data;
+};
+export const addStaffContact = async (data) => {
+    const res = await axios.post(`${API}/staff-contacts`, data, tok());
+    return res.data;
+};
+export const deleteStaffContact = async (id) => {
+    await axios.delete(`${API}/staff-contacts/${id}`, tok());
+};
+
+// ─── Feedback ─────────────────────────────────────────────────────────────────
+export const getFeedback = async () => {
+    const res = await axios.get(`${API}/feedback`, tok());
+    return res.data;
+};
+export const getFeedbackStats = async () => {
+    const res = await axios.get(`${API}/feedback/stats`, tok());
+    return res.data;
+};
+export const submitFeedback = async (data) => {
+    await axios.post(`${API}/feedback`, data, tok());
+};
+export const updateFeedbackStatus = async (id, data) => {
+    await axios.put(`${API}/feedback/${id}`, data, tok());
+};
+export const deleteFeedback = async (id) => {
+    await axios.delete(`${API}/feedback/${id}`, tok());
+};
+
+// ─── Timetables ───────────────────────────────────────────────────────────────
+export const getTimeTables = async (params) => {
+    const res = await axios.get(`${API}/timetables`, { ...tok(), params });
+    return res.data;
+};
+export const addTimeTable = async (data) => {
+    const res = await axios.post(`${API}/timetables`, data, tok());
+    return res.data;
+};
+export const deleteTimeTable = async (id) => {
+    await axios.delete(`${API}/timetables/${id}`, tok());
 };
 
 export default api;

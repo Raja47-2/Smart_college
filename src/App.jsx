@@ -26,7 +26,12 @@ import Contact from './pages/Contact';
 import Backup from './pages/Backup';
 import AttendanceReport from './pages/AttendanceReport';
 import OnlineClasses from './pages/OnlineClasses';
+import TimeTable from './pages/TimeTable';
 import Permissions from './pages/Permissions';
+import ChangePassword from './pages/ChangePassword';
+import AttendanceAlert from './pages/AttendanceAlert';
+import Feedback from './pages/Feedback';
+import StudentPermissions from './pages/StudentPermissions';
 
 import { AuthProvider } from './context/AuthContext';
 import Login from './pages/Login';
@@ -69,7 +74,12 @@ function App() {
             <Route path="backup" element={<Backup />} />
             <Route path="attendance-report" element={<AttendanceReport />} />
             <Route path="online-classes" element={<OnlineClasses />} />
+            <Route path="timetable" element={<TimeTable />} />
             <Route path="permissions" element={<Permissions />} />
+            <Route path="change-password" element={<ChangePassword />} />
+            <Route path="attendance-alert" element={<AttendanceAlert />} />
+            <Route path="feedback" element={<Feedback />} />
+            <Route path="student-permissions" element={<StudentPermissions />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>

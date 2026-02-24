@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { Plus, X, Camera, Save, Edit2, Users2, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Edit2, Trash2, X, Save, Users2, Camera } from 'lucide-react';
-import axios from 'axios';
+import { getAlumni, addAlumni, deleteAlumni } from '../services/api';
 import './Alumni.css';
 
-const API = 'http://localhost:5000/api';
 const UPLOADS = 'http://localhost:5000';
 
 const emptyForm = { name: '', batch_year: '', course: '', department: '', job_title: '', company: '', contact: '' };
@@ -18,15 +17,14 @@ const Alumni = () => {
     const [photoPreview, setPhotoPreview] = useState(null);
     const [editId, setEditId] = useState(null);
     const [loading, setLoading] = useState(true);
-    const token = localStorage.getItem('token');
-    const isAdmin = user?.role === 'admin';
+    const isAdmin = user?.role === 'admin' || user?.role === 'principal';
 
     useEffect(() => { load(); }, []);
 
     const load = async () => {
         try {
-            const res = await axios.get(`${API}/alumni`, { headers: { Authorization: `Bearer ${token}` } });
-            setAlumni(res.data);
+            const data = await getAlumni();
+            setAlumni(data);
         } catch (e) { console.error(e); }
         finally { setLoading(false); }
     };
@@ -62,12 +60,13 @@ const Alumni = () => {
             });
             if (photoFile) formData.append('photo', photoFile);
 
-            const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' };
-
             if (editId) {
-                await axios.put(`${API}/alumni/${editId}`, formData, { headers });
+                const axios = (await import('axios')).default; // Fallback if direct updateStudent-like put is needed, but index.js put handles it
+                await axios.put(`http://localhost:5000/api/alumni/${editId}`, formData, {
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'multipart/form-data' }
+                });
             } else {
-                await axios.post(`${API}/alumni`, formData, { headers });
+                await addAlumni(formData);
             }
             setShowForm(false);
             load();
@@ -77,7 +76,7 @@ const Alumni = () => {
     const handleDelete = async (id) => {
         if (!window.confirm('Delete this alumni?')) return;
         try {
-            await axios.delete(`${API}/alumni/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+            await deleteAlumni(id);
             load();
         } catch (e) { alert('Error: ' + e.message); }
     };

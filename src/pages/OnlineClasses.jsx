@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Video, Plus, Trash2, ExternalLink, BookOpen, Users, Calendar, Clock, X, Check, ChevronDown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { getOnlineClasses, addOnlineClass, deleteOnlineClass } from '../services/api';
 import './OnlineClasses.css';
 
 // ── Static options ────────────────────────────────────────────────────────────
@@ -63,10 +64,26 @@ const MultiSelect = ({ label, options, selected, onChange, placeholder }) => {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 const OnlineClasses = () => {
     const { user } = useAuth();
-    const isCreator = user?.role === 'admin' || user?.role === 'teacher';
+    const isCreator = user?.role === 'admin' || user?.role === 'principal' || user?.role === 'teacher';
 
     const [classes, setClasses] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
+
+    useEffect(() => {
+        loadClasses();
+    }, []);
+
+    const loadClasses = async () => {
+        try {
+            const data = await getOnlineClasses();
+            setClasses(data);
+        } catch (e) {
+            console.error('Error loading classes:', e);
+        } finally {
+            setLoading(false);
+        }
+    };
     const [form, setForm] = useState({
         title: '',
         stream: '',
@@ -105,24 +122,46 @@ const OnlineClasses = () => {
         return e;
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         const errs = validate();
         if (Object.keys(errs).length > 0) { setErrors(errs); return; }
 
-        const newClass = {
-            id: Date.now(),
-            ...form,
-            createdBy: user?.name || 'Faculty',
-            createdAt: new Date().toISOString(),
-        };
-        setClasses(prev => [newClass, ...prev]);
-        setForm({ title: '', stream: '', departments: [], years: [], classType: 'Lecture', meetLink: '', date: '', time: '', duration: '60', description: '' });
-        setShowForm(false);
-        setErrors({});
+        try {
+            const newClassData = {
+                teacher_id: user.id,
+                title: form.title,
+                stream: form.stream,
+                departments: form.departments,
+                years: form.years,
+                class_type: form.classType,
+                meet_link: form.meetLink,
+                date: form.date,
+                time: form.time,
+                duration: parseInt(form.duration),
+                description: form.description
+            };
+
+            await addOnlineClass(newClassData);
+            await loadClasses();
+            setForm({ title: '', stream: '', departments: [], years: [], classType: 'Lecture', meetLink: '', date: '', time: '', duration: '60', description: '' });
+            setShowForm(false);
+            setErrors({});
+        } catch (err) {
+            console.error('Error creating class:', err);
+            setErrors({ submit: 'Failed to create class. Please try again.' });
+        }
     };
 
-    const deleteClass = (id) => setClasses(prev => prev.filter(c => c.id !== id));
+    const handleDelete = async (id) => {
+        if (!window.confirm('Are you sure you want to delete this class?')) return;
+        try {
+            await deleteOnlineClass(id);
+            await loadClasses();
+        } catch (e) {
+            console.error('Error deleting class:', e);
+        }
+    };
 
     return (
         <div className="oc-page page-container">
@@ -266,7 +305,7 @@ const OnlineClasses = () => {
                             <div className="oc-card-top">
                                 <span className={`oc-type-badge type-${cls.classType.toLowerCase()}`}>{cls.classType}</span>
                                 {isCreator && (
-                                    <button className="icon-btn delete" onClick={() => deleteClass(cls.id)} title="Delete class">
+                                    <button className="icon-btn delete" onClick={() => handleDelete(cls.id)} title="Delete class">
                                         <Trash2 size={15} />
                                     </button>
                                 )}
@@ -278,7 +317,7 @@ const OnlineClasses = () => {
                                 <span><BookOpen size={13} /> {cls.stream}</span>
                                 <span><Calendar size={13} /> {cls.date} at {cls.time}</span>
                                 <span><Clock size={13} /> {cls.duration} min</span>
-                                <span><Users size={13} /> By {cls.createdBy}</span>
+                                <span><Users size={13} /> By {cls.teacher_name || 'Faculty'}</span>
                             </div>
 
                             {/* Tags */}
@@ -289,7 +328,7 @@ const OnlineClasses = () => {
 
                             {cls.description && <p className="oc-desc">{cls.description}</p>}
 
-                            <a href={cls.meetLink} target="_blank" rel="noreferrer" className="btn btn-primary oc-join-btn">
+                            <a href={cls.meet_link} target="_blank" rel="noreferrer" className="btn btn-primary oc-join-btn">
                                 <ExternalLink size={15} /> Join Class
                             </a>
                         </div>

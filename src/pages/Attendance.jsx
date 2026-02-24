@@ -109,7 +109,7 @@ const Attendance = () => {
 
     // Only Admin and Teacher can modify attendance
     // Teacher restricted by time (08:40-02:50) and date (Today only)
-    const canModify = user?.role === 'admin' ||
+    const canModify = user?.role === 'admin' || user?.role === 'principal' ||
         (user?.role === 'teacher' && isToday(date) && isAttendanceOpen());
 
     return (

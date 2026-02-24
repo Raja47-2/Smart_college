@@ -13,7 +13,7 @@ const createTables = () => {
       name TEXT NOT NULL,
       email TEXT UNIQUE NOT NULL,
       password TEXT NOT NULL,
-      role TEXT NOT NULL CHECK(role IN ('admin', 'teacher', 'student')),
+      role TEXT NOT NULL CHECK(role IN ('admin', 'teacher', 'student', 'principal')),
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
 
@@ -126,6 +126,19 @@ const createTables = () => {
       email TEXT
     )`);
 
+    // Timetables Table
+    db.run(`CREATE TABLE IF NOT EXISTS timetables (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      stream TEXT NOT NULL,
+      department TEXT NOT NULL,
+      year TEXT NOT NULL,
+      day TEXT NOT NULL,
+      time TEXT NOT NULL,
+      subject TEXT NOT NULL,
+      faculty_name TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`);
+
     console.log('Tables created.');
     seedData();
   });
@@ -135,6 +148,7 @@ const seedData = async () => {
   const adminPassword = await bcrypt.hash('admin123', 10);
   const teacherPassword = await bcrypt.hash('teacher123', 10);
   const studentPassword = await bcrypt.hash('student123', 10);
+  const principalPassword = await bcrypt.hash('principal123', 10);
 
   db.get("SELECT count(*) as count FROM users", [], (err, row) => {
     if (err) return console.error(err.message);
@@ -143,6 +157,7 @@ const seedData = async () => {
 
       const stmt = db.prepare("INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)");
       stmt.run('Admin User', 'admin@college.edu', adminPassword, 'admin');
+      stmt.run('Principal User', 'principal@college.edu', principalPassword, 'principal');
       stmt.run('Teacher One', 'teacher@college.edu', teacherPassword, 'teacher');
       stmt.run('Student One', 'student@college.edu', studentPassword, 'student');
       stmt.finalize();

@@ -39,7 +39,7 @@ const Faculty = () => {
         f.department.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const isAdmin = user?.role === 'admin';
+    const isAdmin = user?.role === 'admin' || user?.role === 'principal';
 
     return (
         <div className="page-container">

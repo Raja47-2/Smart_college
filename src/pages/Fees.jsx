@@ -1,19 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Search, Edit, Trash2, CheckCircle, AlertCircle, Bell } from 'lucide-react';
-import { getFees, deleteFee } from '../services/api';
+import { getFees, deleteFee, markFeePaid, sendFeeReminders } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
 import './Fees.css';
 
-const API = 'http://localhost:5000/api';
 
 const Fees = () => {
     const { user } = useAuth();
     const [fees, setFees] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
-    const token = localStorage.getItem('token');
 
     useEffect(() => { loadFees(); }, []);
 
@@ -31,15 +28,15 @@ const Fees = () => {
 
     const handleMarkPaid = async (id) => {
         try {
-            await axios.put(`${API}/fees/${id}/pay`, {}, { headers: { Authorization: `Bearer ${token}` } });
+            await markFeePaid(id);
             loadFees();
         } catch (e) { alert('Failed: ' + (e.response?.data?.error || e.message)); }
     };
 
     const handleSendReminder = async () => {
         try {
-            const res = await axios.post(`${API}/fees/remind`, {}, { headers: { Authorization: `Bearer ${token}` } });
-            alert(res.data.message);
+            const data = await sendFeeReminders();
+            alert(data.message);
         } catch (e) { alert('Failed: ' + (e.response?.data?.error || e.message)); }
     };
 
@@ -51,7 +48,7 @@ const Fees = () => {
     const pendingCount = fees.filter(f => f.status === 'Pending').length;
     const paidCount = fees.filter(f => f.status === 'Paid').length;
     const totalPending = fees.filter(f => f.status === 'Pending').reduce((s, f) => s + f.amount, 0);
-    const isAdmin = user?.role === 'admin';
+    const isAdmin = user?.role === 'admin' || user?.role === 'principal';
 
     return (
         <div className="page-container">

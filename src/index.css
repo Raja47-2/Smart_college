@@ -29,6 +29,12 @@
   /* Surfaces */
   --bg: #0f0f1a;
   --bg-2: #16162a;
+  /* Semantic Aliases */
+  --text-color: var(--text-primary);
+  --primary-color: var(--primary);
+  --bg-surface: #1e1e35;
+  --bg-body: #0f0f1a;
+  --bg-muted: rgba(255, 255, 255, 0.05);
   --card-bg: rgba(255, 255, 255, 0.04);
   --card-border: rgba(255, 255, 255, 0.08);
   --card-background: #1e1e35;

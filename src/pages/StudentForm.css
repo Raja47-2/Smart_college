@@ -1,50 +1,134 @@
-/* StudentForm / FacultyForm shared styles */
-.form-page {
-    max-width: 700px;
-    margin: 0 auto;
-    padding: 2rem;
-    animation: fadeIn 0.4s ease both;
-}
-
+/* StudentForm page specific styles */
 .form-card {
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 1.25rem;
-    padding: 2rem;
-    backdrop-filter: blur(16px);
+    border-radius: 1.1rem;
+    padding: 1.5rem 1.75rem;
+    backdrop-filter: blur(14px);
+    animation: fadeIn 0.4s ease both;
 }
 
-.form-card h2 {
-    font-size: 1.3rem;
+.section-title {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
     font-weight: 700;
-    margin-bottom: 1.75rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    color: var(--primary);
+    margin-bottom: 1.25rem;
     display: flex;
     align-items: center;
-    gap: 0.6rem;
-    background: linear-gradient(135deg, var(--text-primary), var(--primary));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    gap: 0.5rem;
+}
+
+.optional-tag {
+    font-size: 0.65rem;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--text-muted);
+    font-weight: 400;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .form-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1.25rem;
-    margin-bottom: 1.5rem;
+    gap: 1.1rem;
 }
 
 .form-grid .full-width {
     grid-column: 1 / -1;
 }
 
+/* Photo */
+.photo-upload-area {
+    text-align: center;
+    padding: 0.75rem;
+}
+
+.photo-upload-label {
+    display: inline-block;
+    cursor: pointer;
+}
+
+.photo-placeholder {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 2px dashed var(--primary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    color: var(--primary);
+    margin: 0 auto;
+    transition: background 0.2s;
+}
+
+.photo-placeholder:hover {
+    background: rgba(99, 102, 241, 0.08);
+}
+
+.photo-preview-img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--primary);
+    box-shadow: 0 0 0 6px rgba(99, 102, 241, 0.15);
+    display: block;
+    margin: 0 auto;
+}
+
+.photo-hint {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 0.6rem;
+}
+
+/* Gender radio buttons */
+.radio-group {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.2rem;
+}
+
+.radio-btn {
+    flex: 1;
+    min-width: 70px;
+    text-align: center;
+    padding: 0.5rem 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    transition: all 0.2s;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.radio-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.radio-btn.selected {
+    background: rgba(99, 102, 241, 0.15);
+    border-color: var(--primary);
+    color: var(--primary);
+    font-weight: 700;
+}
+
 .form-actions {
     display: flex;
     gap: 0.75rem;
     justify-content: flex-end;
-    margin-top: 0.5rem;
+    margin-top: 0.25rem;
 }
 
 @media (max-width: 640px) {

@@ -11,25 +11,27 @@ import { getTeacherPermissions } from '../services/api';
  */
 export const usePermissions = () => {
     const { user } = useAuth();
-    const [studentPerms, setStudentPerms] = useState({});
+    const [permissions, setPermissions] = useState({});
 
     useEffect(() => {
-        if (user?.role === 'student') {
+        if (!user) return;
+
+        if (user.role === 'student') {
             axios.get(`http://localhost:5000/api/student-permissions/${user.id}`, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-            }).then(res => setStudentPerms(res.data || {}));
+            }).then(res => setPermissions(res.data || {}));
+        } else if (user.role === 'teacher') {
+            getTeacherPermissions(user.id).then(perms => {
+                setPermissions(perms || {});
+            }).catch(err => console.error("Failed to fetch teacher permissions", err));
         }
     }, [user]);
 
     const hasPermission = (key) => {
         if (!user) return false;
         if (user.role === 'admin' || user.role === 'principal') return true;
-        if (user.role === 'teacher') {
-            const perms = getTeacherPermissions(user.id);
-            return !!perms[key];
-        }
-        if (user.role === 'student') {
-            return !!studentPerms[key];
+        if (user.role === 'teacher' || user.role === 'student') {
+            return !!permissions[key];
         }
         return false;
     };

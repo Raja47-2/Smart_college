@@ -139,6 +139,18 @@ const createTables = () => {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
 
+    // Semester Registrations Table
+    db.run(`CREATE TABLE IF NOT EXISTS semester_registrations (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      student_id INTEGER NOT NULL,
+      semester TEXT NOT NULL,
+      registration_date TEXT NOT NULL,
+      status TEXT NOT NULL,
+      remarks TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(student_id) REFERENCES students(id)
+    )`);
+
     console.log('Tables created.');
     seedData();
   });

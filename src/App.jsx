@@ -32,6 +32,7 @@ import ChangePassword from './pages/ChangePassword';
 import AttendanceAlert from './pages/AttendanceAlert';
 import Feedback from './pages/Feedback';
 import StudentPermissions from './pages/StudentPermissions';
+import SemesterRegistration from './pages/SemesterRegistration';
 
 import { AuthProvider } from './context/AuthContext';
 import Login from './pages/Login';
@@ -80,6 +81,7 @@ function App() {
             <Route path="attendance-alert" element={<AttendanceAlert />} />
             <Route path="feedback" element={<Feedback />} />
             <Route path="student-permissions" element={<StudentPermissions />} />
+            <Route path="registration" element={<SemesterRegistration />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>

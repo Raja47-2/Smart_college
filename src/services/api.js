@@ -177,6 +177,7 @@ export const ALL_PERMISSIONS = [
     { key: 'manage_notifications', label: 'Notifications' },
     { key: 'view_reports', label: 'Attendance Reports' },
     { key: 'delegate_permissions', label: 'Delegate Permissions' },
+    { key: 'manage_registrations', label: 'Manage Registrations' },
 ];
 
 export const getTeacherPermissions = async (teacherId) => {
@@ -260,6 +261,23 @@ export const addTimeTable = async (data) => {
 };
 export const deleteTimeTable = async (id) => {
     await axios.delete(`${API}/timetables/${id}`, tok());
+};
+
+// ─── Semester Registrations ──────────────────────────────────────────────────
+export const getRegistrations = async () => {
+    const res = await axios.get(`${API}/registrations`, tok());
+    return res.data;
+};
+export const addRegistration = async (data) => {
+    const res = await axios.post(`${API}/registrations`, data, tok());
+    return res.data;
+};
+export const updateRegistration = async (id, data) => {
+    const res = await axios.put(`${API}/registrations/${id}`, data, tok());
+    return res.data;
+};
+export const deleteRegistration = async (id) => {
+    await axios.delete(`${API}/registrations/${id}`, tok());
 };
 
 export default api;

@@ -76,6 +76,11 @@ const Layout = () => {
                         navLink('/attendance', <CalendarCheck size={19} />, 'Attendance', false, closeSidebar)
                     }
 
+                    {/* Registration — admin/principal/teacher */}
+                    {(canSeeAdminMenu || isTeacher) &&
+                        navLink('/registration', <BookOpen size={19} />, 'Registration', false, closeSidebar)
+                    }
+
                     {/* Fees – admin/principal always, teacher if granted */}
                     {(canSeeAdminMenu || (isTeacher && hasPermission('manage_fees'))) &&
                         navLink('/fees', <Wallet size={19} />, 'Fees', false, closeSidebar)

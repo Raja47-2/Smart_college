@@ -96,8 +96,8 @@ const Attendance = () => {
         const currentMinutes = now.getMinutes();
         const currentTime = currentHours * 60 + currentMinutes;
 
-        const startTime = 8 * 60 + 40; // 08:40 -> 520 minutes
-        const endTime = 14 * 60 + 50;  // 14:50 -> 890 minutes
+        const startTime = 0 * 60 + 0;  // 12:00 AM
+        const endTime = 23 * 60 + 59; // 11:59 PM
 
         return currentTime >= startTime && currentTime <= endTime;
     };

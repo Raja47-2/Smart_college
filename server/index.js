@@ -286,7 +286,13 @@ app.post('/api/attendance', (req, res) => {
 
 // --- FEES ROUTES ---
 app.get('/api/fees', (req, res) => {
-    db.all("SELECT f.*, s.name as student_name FROM fees f LEFT JOIN students s ON f.student_id = s.id", [], (err, rows) => {
+    const sql = `
+        SELECT f.*, s.name as student_name, s.type as student_type, s.department, s.year 
+        FROM fees f 
+        JOIN students s ON f.student_id = s.id 
+        ORDER BY f.due_date DESC
+    `;
+    db.all(sql, [], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
     });
@@ -849,6 +855,72 @@ app.post('/api/teacher-permissions/:teacherId', (req, res) => {
     });
 });
 
+// --- STUDENT PERMISSIONS ROUTES ---
+app.get('/api/student-permissions/all', (req, res) => {
+    db.all("SELECT user_id, permissions FROM student_permissions", [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        const permsMap = {};
+        rows.forEach(r => permsMap[r.user_id] = JSON.parse(r.permissions));
+        res.json(permsMap);
+    });
+});
+
+app.get('/api/student-permissions/:studentId', (req, res) => {
+    db.get("SELECT permissions FROM student_permissions WHERE user_id = ?", [req.params.studentId], (err, row) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(row ? JSON.parse(row.permissions) : {});
+    });
+});
+
+app.post('/api/student-permissions/:studentId', (req, res) => {
+    const { permissions } = req.body;
+    const permsString = JSON.stringify(permissions);
+    db.run("INSERT OR REPLACE INTO student_permissions (user_id, permissions) VALUES (?, ?)", [req.params.studentId, permsString], function (err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ message: 'Permissions updated' });
+    });
+});
+
+// --- SEMESTER REGISTRATION ROUTES ---
+app.get('/api/registrations', (req, res) => {
+    const sql = `
+        SELECT r.*, s.name as student_name, s.registration_no, s.department, s.year 
+        FROM semester_registrations r
+        JOIN students s ON r.student_id = s.id
+        ORDER BY r.registration_date DESC
+    `;
+    db.all(sql, [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+    });
+});
+
+app.post('/api/registrations', (req, res) => {
+    const { student_id, semester, registration_date, status, remarks } = req.body;
+    const stmt = db.prepare("INSERT INTO semester_registrations (student_id, semester, registration_date, status, remarks) VALUES (?, ?, ?, ?, ?)");
+    stmt.run(student_id, semester, registration_date, status, remarks, function (err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ id: this.lastID, ...req.body });
+    });
+});
+
+app.put('/api/registrations/:id', (req, res) => {
+    const { semester, registration_date, status, remarks } = req.body;
+    const stmt = db.prepare("UPDATE semester_registrations SET semester=?, registration_date=?, status=?, remarks=? WHERE id=?");
+    stmt.run(semester, registration_date, status, remarks, req.params.id, function (err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ message: 'Updated' });
+    });
+});
+
+app.delete('/api/registrations/:id', (req, res) => {
+    db.run("DELETE FROM semester_registrations WHERE id = ?", [req.params.id], function (err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ message: 'Deleted' });
+    });
+});
+
+// --- START SERVER ---
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });

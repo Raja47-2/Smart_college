@@ -58,7 +58,7 @@ const Fees = () => {
                     {isAdmin && (
                         <>
                             <button className="btn btn-secondary" onClick={handleSendReminder}>
-                                <Bell size={16} /> Send Reminders
+                                <Bell size={16} /> Mark Overdue Notifications
                             </button>
                             <Link to="/fees/add" className="btn btn-primary">
                                 <Plus size={18} /> Add Fee
@@ -70,13 +70,14 @@ const Fees = () => {
 
             <div className="fee-stats">
                 <div className="fee-stat pending"><AlertCircle size={20} /><div><div className="stat-num">{pendingCount}</div><div className="stat-label">Pending (₹{totalPending})</div></div></div>
+                <div className="fee-stat overdue"><AlertCircle size={20} /><div><div className="stat-num">{fees.filter(f => f.status === 'Overdue').length}</div><div className="stat-label">Overdue</div></div></div>
                 <div className="fee-stat paid"><CheckCircle size={20} /><div><div className="stat-num">{paidCount}</div><div className="stat-label">Paid</div></div></div>
             </div>
 
             <div className="toolbar">
                 <div className="search-bar">
                     <Search size={18} className="search-icon" />
-                    <input type="text" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                    <input type="text" placeholder="Search by student, type, or batch..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                 </div>
             </div>
 
@@ -87,17 +88,38 @@ const Fees = () => {
                     <table className="data-table">
                         <thead>
                             <tr>
-                                <th>Student</th><th>Fee Type</th><th>Amount</th><th>Due Date</th><th>Status</th>
+                                <th>Student</th>
+                                <th>Type</th>
+                                <th>Batch</th>
+                                <th>Fee Type</th>
+                                <th>Amount</th>
+                                <th>Due Date</th>
+                                <th>Status</th>
                                 {isAdmin && <th>Actions</th>}
                             </tr>
                         </thead>
                         <tbody>
                             {filteredFees.map((fee) => (
                                 <tr key={fee.id}>
-                                    <td>{fee.studentName || 'Unknown'}</td>
+                                    <td>
+                                        <div className="fee-student-info">
+                                            <span>{fee.student_name}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span className={`type-badge ${fee.student_type?.toLowerCase()}`}>
+                                            {fee.student_type}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div className="batch-info">
+                                            <small>{fee.department}</small>
+                                            <small>{fee.year}</small>
+                                        </div>
+                                    </td>
                                     <td>{fee.type}</td>
                                     <td>₹{fee.amount}</td>
-                                    <td>{fee.dueDate}</td>
+                                    <td>{fee.due_date}</td>
                                     <td>
                                         <span className={`status-badge ${fee.status.toLowerCase()}`}>
                                             {fee.status === 'Paid' ? <CheckCircle size={14} /> : <AlertCircle size={14} />}

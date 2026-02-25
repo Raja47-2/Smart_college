@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, GraduationCap, Calendar, CalendarCheck, Wallet, BookOpen, Bell, BarChart2, LogOut, Info, Users2, Phone, Database, TrendingUp, Zap, Video, ShieldCheck, Menu, X, Key, BellDot, MessageSquare, ShieldAlert } from 'lucide-react';
+import { LayoutDashboard, Users, GraduationCap, Calendar, CalendarCheck, Wallet, BookOpen, Bell, BarChart2, LogOut, Info, Users2, Phone, Database, TrendingUp, Zap, Video, ShieldCheck, Menu, X, Key, BellDot, MessageSquare, ShieldAlert, Lightbulb } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { usePermissions } from '../hooks/usePermissions';
 import './Layout.css';
@@ -121,6 +121,7 @@ const Layout = () => {
                     {navLink('/alumni', <Users2 size={19} />, 'Alumni', false, closeSidebar)}
                     {navLink('/contact', <Phone size={19} />, 'Contact', false, closeSidebar)}
                     {navLink('/feedback', <MessageSquare size={19} />, 'Feedback', false, closeSidebar)}
+                    {navLink('/ai-doubt', <Lightbulb size={19} />, 'AI Assistant', false, closeSidebar)}
 
                     {/* Admin/Principal-only */}
                     {canSeeAdminMenu && navLink('/permissions', <ShieldCheck size={19} />, 'Permissions', false, closeSidebar)}

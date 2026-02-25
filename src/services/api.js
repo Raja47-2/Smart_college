@@ -15,11 +15,15 @@ const tok = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('t
 // ─── Authentication ──────────────
 export const loginUser = async (identifier, password) => {
     const res = await axios.post(`${API}/auth/login`, { identifier, password });
+    // store token if provided
+    if (res.data?.token) {
+        localStorage.setItem('token', res.data.token);
+    }
     const userData = {
-        id: res.data.id,
-        name: res.data.name,
-        email: res.data.email,
-        role: res.data.role,
+        id: res.data.id || null,
+        name: res.data.name || null,
+        email: res.data.email || null,
+        role: res.data.role || null,
     };
     localStorage.setItem('user', JSON.stringify(userData));
     return userData;

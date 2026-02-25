@@ -1,12 +1,15 @@
 import express from 'express';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import { SECRET_KEY } from './config.js';
 import { createRequire } from 'module';
 import { createReadStream } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import multer from 'multer';
 import db from './database.js';
+import aiRoutes from './routes/ai.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname_backup = dirname(__filename);
@@ -41,11 +44,12 @@ app.post('/api/auth/login', (req, res) => {
         if (err) return res.status(500).json({ error: err.message });
 
         if (user) {
-            // ✅ VALIDATE PASSWORD (was missing before – critical bug fix)
-            const valid = await bcrypt.compare(password, user.password);
-            if (!valid) return res.status(400).json({ error: 'Invalid password' });
-            return res.json({ id: user.id, role: user.role, name: user.name, email: user.email });
-        }
+                // ✅ VALIDATE PASSWORD (was missing before – critical bug fix)
+                const valid = await bcrypt.compare(password, user.password);
+                if (!valid) return res.status(400).json({ error: 'Invalid password' });
+                const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, SECRET_KEY, { expiresIn: '8h' });
+                return res.json({ id: user.id, role: user.role, name: user.name, email: user.email, token });
+            }
 
         // Step 2: Try student registration number
         db.get("SELECT user_id FROM students WHERE registration_no = ?", [loginId], (err, student) => {
@@ -57,7 +61,8 @@ app.post('/api/auth/login', (req, res) => {
                     if (!linkedUser) return res.status(400).json({ error: 'User account not found' });
                     const valid = await bcrypt.compare(password, linkedUser.password);
                     if (!valid) return res.status(400).json({ error: 'Invalid password' });
-                    return res.json({ id: linkedUser.id, role: linkedUser.role, name: linkedUser.name, email: linkedUser.email });
+                    const token = jwt.sign({ id: linkedUser.id, email: linkedUser.email, role: linkedUser.role }, SECRET_KEY, { expiresIn: '8h' });
+                    return res.json({ id: linkedUser.id, role: linkedUser.role, name: linkedUser.name, email: linkedUser.email, token });
                 });
                 return;
             }
@@ -919,6 +924,9 @@ app.delete('/api/registrations/:id', (req, res) => {
         res.json({ message: 'Deleted' });
     });
 });
+
+// --- AI ROUTES ---
+app.use('/api/ai', aiRoutes);
 
 // --- START SERVER ---
 app.listen(PORT, () => {

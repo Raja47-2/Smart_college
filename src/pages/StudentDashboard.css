@@ -76,6 +76,11 @@
     color: #ef4444;
 }
 
+/* notifications card uses same color scheme as attendance */
+.notifications-card .stat-info .amount {
+    color: var(--primary);
+}
+
 .timetable-grid {
     display: grid;
     grid-template-columns: auto 1fr 1fr;
@@ -89,4 +94,30 @@
 .stat-info p {
     font-size: 0.8rem;
     color: var(--text-muted);
+}
+
+/* roadmap section styling */
+.section.roadmap {
+    margin-top: 2rem;
+}
+
+.section.roadmap h2 {
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+}
+
+.roadmap-content {
+    background: var(--bg-surface);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px dashed var(--border-color);
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.roadmap-content .coming-soon {
+    margin-top: 0.5rem;
+    font-weight: 600;
+    color: var(--primary);
 }

@@ -26,10 +26,12 @@ router.get('/', authenticateToken, (req, res) => {
 
 // POST /api/faculty
 router.post('/', authenticateToken, (req, res) => {
-    const { name, email, department, designation, password } = req.body;
+    const { name, email, department, designation } = req.body;
+    let { password } = req.body;
 
+    // default password when not specified
     if (!password) {
-        return res.status(400).json({ error: 'Password is required for new faculty' });
+        password = '123456';
     }
 
     db.get("SELECT id FROM users WHERE email = ?", [email], async (err, row) => {

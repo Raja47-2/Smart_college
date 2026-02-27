@@ -12,8 +12,10 @@ const TOKEN = () => localStorage.getItem('token');
 const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 const YEARS = ['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year'];
 const TYPES = ['Regular', 'Lateral Entry', 'Distance'];
+const COURSES = ['B.Tech', 'BCA', 'MCA', 'M.Tech', 'B.Sc', 'M.Sc'];
+const DEPARTMENTS = ['Computer Science', 'Electronic & Communication', 'Mechanical', 'Civil', 'Electrical', 'Information Technology'];
+const SECTIONS = ['A', 'B', 'C', 'D'];
 
-// ── Defined OUTSIDE the component so it never remounts on re-render ──────────
 const Field = ({ label, name, type = 'text', required = false, placeholder = '', value, onChange }) => (
     <div className="form-group">
         <label>{label}{required && <span style={{ color: 'var(--danger)' }}> *</span>}</label>
@@ -26,7 +28,6 @@ const Field = ({ label, name, type = 'text', required = false, placeholder = '',
         />
     </div>
 );
-// ─────────────────────────────────────────────────────────────────────────────
 
 const StudentForm = () => {
     const navigate = useNavigate();
@@ -38,6 +39,7 @@ const StudentForm = () => {
         year: '', registration_no: '', type: '', password: '',
         address: '', dob: '', blood_group: '', gender: '',
         father_name: '', mother_name: '', mobile: '', parent_mobile: '',
+        section: '',
     });
     const [photoFile, setPhotoFile] = useState(null);
     const [photoPreview, setPhotoPreview] = useState(null);
@@ -54,9 +56,8 @@ const StudentForm = () => {
                 } else navigate('/students');
             });
         }
-    }, [id]);
+    }, [id, isEdit, navigate]);
 
-    // Stable setter — does NOT recreate on every render
     const handleChange = (name, value) => setForm(prev => ({ ...prev, [name]: value }));
 
     const handlePhoto = (e) => {
@@ -102,7 +103,6 @@ const StudentForm = () => {
             {error && <div className="alert alert-danger" style={{ marginBottom: '1.25rem' }}>{error}</div>}
 
             <form onSubmit={handleSubmit}>
-                {/* ─── PHOTO SECTION ─── */}
                 <div className="form-card" style={{ marginBottom: '1.5rem' }}>
                     <div className="section-title">Profile Photo</div>
                     <div className="photo-upload-area">
@@ -117,7 +117,6 @@ const StudentForm = () => {
                     </div>
                 </div>
 
-                {/* ─── BASIC INFO ─── */}
                 <div className="form-card" style={{ marginBottom: '1.5rem' }}>
                     <div className="section-title">Basic Information</div>
                     <div className="form-grid">
@@ -127,7 +126,6 @@ const StudentForm = () => {
                         <Field label="Mobile Number" name="mobile" placeholder="10-digit mobile number" value={form.mobile} onChange={handleChange} />
                         <Field label="Parent / Guardian Mobile" name="parent_mobile" placeholder="Parent mobile for SMS alerts" value={form.parent_mobile} onChange={handleChange} />
 
-                        {/* Gender */}
                         <div className="form-group">
                             <label>Gender</label>
                             <div className="radio-group">
@@ -144,7 +142,6 @@ const StudentForm = () => {
 
                         <Field label="Date of Birth" name="dob" type="date" value={form.dob} onChange={handleChange} />
 
-                        {/* Blood group */}
                         <div className="form-group">
                             <label>Blood Group <span className="optional-tag">optional</span></label>
                             <select value={form.blood_group} onChange={e => handleChange('blood_group', e.target.value)}>
@@ -157,18 +154,38 @@ const StudentForm = () => {
                     </div>
                 </div>
 
-                {/* ─── ACADEMIC INFO ─── */}
                 <div className="form-card" style={{ marginBottom: '1.5rem' }}>
                     <div className="section-title">Academic Details</div>
                     <div className="form-grid">
-                        <Field label="Course" name="course" required placeholder="e.g. B.Tech, BCA" value={form.course} onChange={handleChange} />
-                        <Field label="Branch / Department" name="department" required placeholder="e.g. Computer Science" value={form.department} onChange={handleChange} />
+                        <div className="form-group">
+                            <label>Course <span style={{ color: 'var(--danger)' }}>*</span></label>
+                            <select value={form.course} onChange={e => handleChange('course', e.target.value)} required>
+                                <option value="">Select Course</option>
+                                {COURSES.map(c => <option key={c} value={c}>{c}</option>)}
+                            </select>
+                        </div>
+
+                        <div className="form-group">
+                            <label>Branch / Department <span style={{ color: 'var(--danger)' }}>*</span></label>
+                            <select value={form.department} onChange={e => handleChange('department', e.target.value)} required>
+                                <option value="">Select Department</option>
+                                {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
+                            </select>
+                        </div>
 
                         <div className="form-group">
                             <label>Year <span style={{ color: 'var(--danger)' }}>*</span></label>
                             <select value={form.year} onChange={e => handleChange('year', e.target.value)} required>
                                 <option value="">Select year</option>
                                 {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                            </select>
+                        </div>
+
+                        <div className="form-group">
+                            <label>Section <span style={{ color: 'var(--danger)' }}>*</span></label>
+                            <select value={form.section} onChange={e => handleChange('section', e.target.value)} required>
+                                <option value="">Select Section</option>
+                                {SECTIONS.map(s => <option key={s} value={s}>{s}</option>)}
                             </select>
                         </div>
 
@@ -186,7 +203,6 @@ const StudentForm = () => {
                     </div>
                 </div>
 
-                {/* ─── FAMILY INFO ─── */}
                 <div className="form-card" style={{ marginBottom: '1.5rem' }}>
                     <div className="section-title">Family Details <span className="optional-tag">all optional</span></div>
                     <div className="form-grid">

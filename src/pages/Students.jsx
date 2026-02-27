@@ -14,13 +14,21 @@ const Students = () => {
     const [selectedCourse, setSelectedCourse] = useState('All');
     const [selectedYear, setSelectedYear] = useState('All');
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
 
     useEffect(() => { loadStudents(); }, []);
 
     const loadStudents = async () => {
-        try { setStudents(await getStudents()); }
-        catch (e) { console.error(e); }
-        finally { setLoading(false); }
+        setError('');
+        try {
+            const data = await getStudents();
+            setStudents(data);
+        } catch (e) {
+            console.error(e);
+            setError(e.response?.data?.error || e.message || 'Failed to load students');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleDelete = async (id) => {
@@ -61,7 +69,10 @@ const Students = () => {
                         <Plus size={18} /> Add Student
                     </Link>
                 )}
+                <button className="btn btn-secondary" style={{ marginLeft: 8 }} onClick={loadStudents}>Refresh</button>
             </div>
+
+            {error && <div className="alert alert-danger" style={{ margin: '0.75rem 0' }}>{error}</div>}
 
             {/* Toolbar */}
             <div className="toolbar">

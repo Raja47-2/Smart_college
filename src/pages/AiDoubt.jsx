@@ -167,9 +167,9 @@ const AiDoubt = () => {
                       {message.sender === 'ai' ? 'AI Assistant' : 'You'}
                     </span>
                     <span className="timestamp">
-                      {message.timestamp.toLocaleTimeString([], { 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
+                      {message.timestamp.toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit'
                       })}
                     </span>
                   </div>
@@ -199,19 +199,19 @@ const AiDoubt = () => {
           {messages.length <= 2 && (
             <div className="quick-questions">
               <p>Try asking:</p>
-              <button 
+              <button
                 className="quick-q-btn"
                 onClick={() => handleQuickQuestion('How do I understand derivatives?')}
               >
                 How do I understand derivatives?
               </button>
-              <button 
+              <button
                 className="quick-q-btn"
                 onClick={() => handleQuickQuestion('Explain the concept of photosynthesis')}
               >
                 Explain photosynthesis
               </button>
-              <button 
+              <button
                 className="quick-q-btn"
                 onClick={() => handleQuickQuestion('What are the best study tips?')}
               >

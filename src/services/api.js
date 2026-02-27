@@ -10,7 +10,11 @@ const api = axios.create({
 
 // ─── Authentication (no token, just user object in localStorage) ──────────────
 const API = 'http://localhost:5000/api';
-const tok = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+const tok = () => {
+    const t = localStorage.getItem('token');
+    if (!t) return {};
+    return { headers: { Authorization: `Bearer ${t}` } };
+};
 
 // ─── Authentication ──────────────
 export const loginUser = async (identifier, password) => {

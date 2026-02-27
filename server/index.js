@@ -29,6 +29,21 @@ app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(resolve(__dirname_backup, 'uploads')));
 
+// --- MIDDLEWARE ---
+const authenticateToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) return res.status(401).json({ error: 'Access denied, no token provided' });
+
+    jwt.verify(token, SECRET_KEY, (err, user) => {
+        if (err) return res.status(403).json({ error: 'Invalid token' });
+        req.user = user;
+        next();
+    });
+};
+
+
 
 // --- AUTH ROUTES ---
 app.post('/api/auth/login', (req, res) => {
@@ -44,12 +59,12 @@ app.post('/api/auth/login', (req, res) => {
         if (err) return res.status(500).json({ error: err.message });
 
         if (user) {
-                // ✅ VALIDATE PASSWORD (was missing before – critical bug fix)
-                const valid = await bcrypt.compare(password, user.password);
-                if (!valid) return res.status(400).json({ error: 'Invalid password' });
-                const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, SECRET_KEY, { expiresIn: '8h' });
-                return res.json({ id: user.id, role: user.role, name: user.name, email: user.email, token });
-            }
+            // ✅ VALIDATE PASSWORD (was missing before – critical bug fix)
+            const valid = await bcrypt.compare(password, user.password);
+            if (!valid) return res.status(400).json({ error: 'Invalid password' });
+            const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, SECRET_KEY, { expiresIn: '8h' });
+            return res.json({ id: user.id, role: user.role, name: user.name, email: user.email, token });
+        }
 
         // Step 2: Try student registration number
         db.get("SELECT user_id FROM students WHERE registration_no = ?", [loginId], (err, student) => {
@@ -112,14 +127,14 @@ app.put('/api/users/:id/password', async (req, res) => {
 });
 
 // --- STUDENTS ROUTES ---
-app.get('/api/students', (req, res) => {
+app.get('/api/students', authenticateToken, (req, res) => {
     db.all("SELECT * FROM students", [], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
     });
 });
 
-app.post('/api/students', upload.single('photo'), (req, res) => {
+app.post('/api/students', authenticateToken, upload.single('photo'), (req, res) => {
     let { name, email, course, department, year, registration_no, type, password,
         address, dob, blood_group, father_name, mother_name, mobile, gender, parent_mobile } = req.body;
 
@@ -137,14 +152,14 @@ app.post('/api/students', upload.single('photo'), (req, res) => {
                 if (err) return res.status(500).json({ error: err.message });
                 const userId = this.lastID;
                 const stmt = db.prepare(
-                    "INSERT INTO students (user_id, name, email, course, department, year, registration_no, type, photo_url, address, dob, blood_group, father_name, mother_name, mobile, gender, parent_mobile) "
-                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                    "INSERT INTO students (user_id, name, email, course, department, year, registration_no, type, photo_url, address, dob, blood_group, father_name, mother_name, mobile, gender, parent_mobile, section) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
                 );
                 stmt.run(userId, name, email, course, department, year, registration_no, type,
-                    photo_url, address || null, dob || null, blood_group || null, father_name || null, mother_name || null, mobile || null, gender || null, parent_mobile || null,
+                    photo_url, address || null, dob || null, blood_group || null, father_name || null, mother_name || null, mobile || null, gender || null, parent_mobile || null, req.body.section || null,
                     function (err) {
                         if (err) return res.status(500).json({ error: err.message });
-                        res.json({ id: this.lastID, user_id: userId, name, email, course, department, year, registration_no, type, photo_url });
+                        res.json({ id: this.lastID, user_id: userId, name, email, course, department, year, registration_no, type, photo_url, section: req.body.section });
                     });
             });
         } catch (e) {
@@ -153,7 +168,7 @@ app.post('/api/students', upload.single('photo'), (req, res) => {
     });
 });
 
-app.put('/api/students/:id', upload.single('photo'), (req, res) => {
+app.put('/api/students/:id', authenticateToken, upload.single('photo'), (req, res) => {
     const { name, email, course, department, year, registration_no, type,
         address, dob, blood_group, father_name, mother_name, mobile, gender, parent_mobile } = req.body;
 
@@ -161,10 +176,10 @@ app.put('/api/students/:id', upload.single('photo'), (req, res) => {
         const photo_url = `/uploads/${req.file.filename}`;
         const stmt = db.prepare(
             "UPDATE students SET name=?, email=?, course=?, department=?, year=?, registration_no=?, type=?, "
-            + "photo_url=?, address=?, dob=?, blood_group=?, father_name=?, mother_name=?, mobile=?, gender=?, parent_mobile=? WHERE id=?"
+            + "photo_url=?, address=?, dob=?, blood_group=?, father_name=?, mother_name=?, mobile=?, gender=?, parent_mobile=?, section=? WHERE id=?"
         );
         stmt.run(name, email, course, department, year, registration_no, type,
-            photo_url, address || null, dob || null, blood_group || null, father_name || null, mother_name || null, mobile || null, gender || null, parent_mobile || null,
+            photo_url, address || null, dob || null, blood_group || null, father_name || null, mother_name || null, mobile || null, gender || null, parent_mobile || null, req.body.section || null,
             req.params.id, function (err) {
                 if (err) return res.status(500).json({ error: err.message });
                 res.json({ message: 'Updated', photo_url });
@@ -172,10 +187,10 @@ app.put('/api/students/:id', upload.single('photo'), (req, res) => {
     } else {
         const stmt = db.prepare(
             "UPDATE students SET name=?, email=?, course=?, department=?, year=?, registration_no=?, type=?, "
-            + "address=?, dob=?, blood_group=?, father_name=?, mother_name=?, mobile=?, gender=?, parent_mobile=? WHERE id=?"
+            + "address=?, dob=?, blood_group=?, father_name=?, mother_name=?, mobile=?, gender=?, parent_mobile=?, section=? WHERE id=?"
         );
         stmt.run(name, email, course, department, year, registration_no, type,
-            address || null, dob || null, blood_group || null, father_name || null, mother_name || null, mobile || null, gender || null, parent_mobile || null,
+            address || null, dob || null, blood_group || null, father_name || null, mother_name || null, mobile || null, gender || null, parent_mobile || null, req.body.section || null,
             req.params.id, function (err) {
                 if (err) return res.status(500).json({ error: err.message });
                 res.json({ message: 'Updated' });
@@ -183,7 +198,7 @@ app.put('/api/students/:id', upload.single('photo'), (req, res) => {
     }
 });
 
-app.delete('/api/students/:id', (req, res) => {
+app.delete('/api/students/:id', authenticateToken, (req, res) => {
     db.run("DELETE FROM students WHERE id = ?", req.params.id, function (err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ message: 'Deleted' });
@@ -191,14 +206,14 @@ app.delete('/api/students/:id', (req, res) => {
 });
 
 // --- FACULTY ROUTES ---
-app.get('/api/faculty', (req, res) => {
+app.get('/api/faculty', authenticateToken, (req, res) => {
     db.all("SELECT * FROM faculty", [], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
     });
 });
 
-app.post('/api/faculty', (req, res) => {
+app.post('/api/faculty', authenticateToken, (req, res) => {
     const { name, email, department, designation, registration_no } = req.body;
     let password = req.body.password;
 
@@ -219,10 +234,10 @@ app.post('/api/faculty', (req, res) => {
 
                 const userId = this.lastID;
 
-                const stmt = db.prepare("INSERT INTO faculty (user_id, name, email, department, designation) VALUES (?, ?, ?, ?, ?)");
-                stmt.run(userId, name, email, department, designation, function (err) {
+                const stmt = db.prepare("INSERT INTO faculty (user_id, name, email, department, designation, registration_no) VALUES (?, ?, ?, ?, ?, ?)");
+                stmt.run(userId, name, email, department, designation, registration_no, function (err) {
                     if (err) return res.status(500).json({ error: err.message });
-                    res.json({ id: this.lastID, user_id: userId, ...req.body });
+                    res.json({ id: this.lastID, user_id: userId, name, email, department, designation, registration_no });
                 });
             });
         } catch (e) {
@@ -248,15 +263,23 @@ app.delete('/api/faculty/:id', (req, res) => {
 });
 
 // --- ATTENDANCE ROUTES ---
-app.get('/api/attendance', (req, res) => {
-    db.all("SELECT * FROM attendance", [], (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(rows);
-    });
+app.get('/api/attendance', authenticateToken, (req, res) => {
+    if (req.user.role === 'student') {
+        db.all("SELECT a.* FROM attendance a JOIN students s ON a.student_id = s.id WHERE s.user_id = ?", [req.user.id], (err, rows) => {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json(rows);
+        });
+    } else {
+        db.all("SELECT * FROM attendance", [], (err, rows) => {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json(rows);
+        });
+    }
 });
 
-app.post('/api/attendance', (req, res) => {
-    const { date, records, role } = req.body;
+app.post('/api/attendance', authenticateToken, (req, res) => {
+    const { date, records } = req.body;
+    const role = req.user.role;
 
     // Attendance Restrictions (skip for admin)
     if (role !== 'admin') {
@@ -368,15 +391,15 @@ app.get('/api/assignments/:id/submissions', (req, res) => {
 });
 
 // --- NOTIFICATIONS ROUTES ---
-app.get('/api/notifications', (req, res) => {
+app.get('/api/notifications', authenticateToken, (req, res) => {
     // Get notifications for this user OR global ones (user_id IS NULL)
-    db.all("SELECT * FROM notifications WHERE user_id = ? OR user_id IS NULL ORDER BY created_at DESC", [req.user.id], (err, rows) => {
+    db.all("SELECT * FROM notifications WHERE user_id = ? OR user_id IS NULL OR user_id = '' ORDER BY created_at DESC", [req.user.id], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
     });
 });
 
-app.post('/api/notifications', (req, res) => {
+app.post('/api/notifications', authenticateToken, (req, res) => {
     if (req.user.role !== 'admin' && req.user.role !== 'teacher') { // Only admin/teacher can send?
         return res.sendStatus(403);
     }
@@ -927,6 +950,113 @@ app.delete('/api/registrations/:id', (req, res) => {
 
 // --- AI ROUTES ---
 app.use('/api/ai', aiRoutes);
+
+// --- PERMISSIONS ROUTES ---
+// Student permissions endpoints
+app.get('/api/student-permissions/all', authenticateToken, (req, res) => {
+    db.all(
+        "SELECT student_id, permissions FROM student_permissions",
+        [],
+        (err, rows) => {
+            if (err) return res.status(500).json({ error: err.message });
+            const result = {};
+            rows.forEach(row => {
+                try {
+                    result[String(row.student_id)] = JSON.parse(row.permissions || '{}');
+                } catch (e) {
+                    result[String(row.student_id)] = {};
+                }
+            });
+            res.json(result);
+        }
+    );
+});
+
+app.get('/api/student-permissions/:studentId', authenticateToken, (req, res) => {
+    const studentId = req.params.studentId;
+    db.get(
+        "SELECT permissions FROM student_permissions WHERE student_id = ?",
+        [studentId],
+        (err, row) => {
+            if (err) return res.status(500).json({ error: err.message });
+            if (!row) return res.json({});
+            try {
+                return res.json(JSON.parse(row.permissions || '{}'));
+            } catch (e) {
+                return res.json({});
+            }
+        }
+    );
+});
+
+app.post('/api/student-permissions/:studentId', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'admin' && req.user.role !== 'principal') {
+        return res.status(403).json({ error: 'Unauthorized' });
+    }
+    const studentId = req.params.studentId;
+    const { permissions } = req.body;
+    const permissionsJson = JSON.stringify(permissions || {});
+    const stmt = db.prepare(
+        "INSERT INTO student_permissions (student_id, permissions) VALUES (?, ?) ON CONFLICT(student_id) DO UPDATE SET permissions = ?"
+    );
+    stmt.run(studentId, permissionsJson, permissionsJson, function (err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ message: 'Permissions saved' });
+    });
+});
+
+// Teacher permissions endpoints
+app.get('/api/teacher-permissions/all', authenticateToken, (req, res) => {
+    db.all(
+        "SELECT teacher_id, permissions FROM teacher_permissions",
+        [],
+        (err, rows) => {
+            if (err) return res.status(500).json({ error: err.message });
+            const result = {};
+            rows.forEach(row => {
+                try {
+                    result[String(row.teacher_id)] = JSON.parse(row.permissions || '{}');
+                } catch (e) {
+                    result[String(row.teacher_id)] = {};
+                }
+            });
+            res.json(result);
+        }
+    );
+});
+
+app.get('/api/teacher-permissions/:teacherId', authenticateToken, (req, res) => {
+    const teacherId = req.params.teacherId;
+    db.get(
+        "SELECT permissions FROM teacher_permissions WHERE teacher_id = ?",
+        [teacherId],
+        (err, row) => {
+            if (err) return res.status(500).json({ error: err.message });
+            if (!row) return res.json({});
+            try {
+                return res.json(JSON.parse(row.permissions || '{}'));
+            } catch (e) {
+                return res.json({});
+            }
+        }
+    );
+});
+
+app.post('/api/teacher-permissions/:teacherId', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'admin' && req.user.role !== 'principal') {
+        return res.status(403).json({ error: 'Unauthorized' });
+    }
+    const teacherId = req.params.teacherId;
+    const { permissions } = req.body;
+    const permissionsJson = JSON.stringify(permissions || {});
+    const stmt = db.prepare(
+        "INSERT INTO teacher_permissions (teacher_id, permissions) VALUES (?, ?) ON CONFLICT(teacher_id) DO UPDATE SET permissions = ?"
+    );
+    stmt.run(teacherId, permissionsJson, permissionsJson, function (err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ message: 'Permissions saved' });
+    });
+});
 
 // --- START SERVER ---
 app.listen(PORT, () => {

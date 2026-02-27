@@ -10,17 +10,20 @@ const Faculty = () => {
     const [faculty, setFaculty] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
 
     useEffect(() => {
         loadFaculty();
     }, []);
 
     const loadFaculty = async () => {
+        setError('');
         try {
             const data = await getFaculty();
             setFaculty(data);
-        } catch (error) {
-            console.error("Failed to load faculty", error);
+        } catch (err) {
+            console.error("Failed to load faculty", err);
+            setError(err.response?.data?.error || err.message || 'Failed to load faculty');
         } finally {
             setLoading(false);
         }
@@ -51,7 +54,10 @@ const Faculty = () => {
                         Add Faculty
                     </Link>
                 )}
+                <button className="btn btn-secondary" style={{ marginLeft: 8 }} onClick={loadFaculty}>Refresh</button>
             </div>
+
+            {error && <div className="alert alert-danger" style={{ margin: '0.75rem 0' }}>{error}</div>}
 
             <div className="toolbar">
                 <div className="search-bar">

@@ -2,19 +2,21 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: linear-gradient(135deg, #0ea5a4 0%, #0369a1 100%);
+  background: #0f172a;
+  /* Deep dark blue background */
   color: #f8fafc;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 .ai-doubt-header {
-  background: linear-gradient(135deg, #0ea5a4 0%, #0369a1 100%);
+  background: rgba(30, 41, 59, 0.5);
+  backdrop-filter: blur(12px);
   color: white;
-  padding: 20px 30px;
+  padding: 1.5rem 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .header-content {
@@ -68,12 +70,11 @@
 }
 
 .doubt-sidebar {
-  width: 280px;
-  background: #f3fbfb;
-  border-right: 1px solid #e0e0e0;
-  padding: 20px;
+  width: 300px;
+  background: rgba(15, 23, 42, 0.8);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 2rem;
   overflow-y: auto;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.06);
 }
 
 .doubt-sidebar h3 {
@@ -148,7 +149,8 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: #fbfffe;
+  background: #0f172a;
+  /* Matches container background */
 }
 
 .messages-area {
@@ -171,6 +173,7 @@
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -194,11 +197,11 @@
 }
 
 .message.ai .message-icon {
-  background: linear-gradient(135deg, #0ea5a4 0%, #0369a1 100%);
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
 }
 
 .message.user .message-icon {
-  background: #4CAF50;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
 }
 
 .message-content {
@@ -227,18 +230,24 @@
 }
 
 .message-text {
-  background: #eef7f6;
-  padding: 12px 15px;
-  border-radius: 10px;
-  line-height: 1.5;
+  background: rgba(30, 41, 59, 0.8);
+  /* AI Response background - Darker slate */
+  padding: 1rem 1.25rem;
+  border-radius: 0 1.25rem 1.25rem 1.25rem;
+  line-height: 1.6;
   word-wrap: break-word;
-  color: #333;
-  font-size: 14px;
+  color: #e2e8f0;
+  font-size: 0.95rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .message.user .message-text {
-  background: #667eea;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  /* User Send background - Indigo */
   color: white;
+  border-radius: 1.25rem 0 1.25rem 1.25rem;
+  border: none;
 }
 
 .message-sources {
@@ -261,6 +270,7 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -325,7 +335,7 @@
 .category-select:focus {
   outline: none;
   border-color: #0ea5a4;
-  box-shadow: 0 0 0 3px rgba(14,165,164,0.08);
+  box-shadow: 0 0 0 3px rgba(14, 165, 164, 0.08);
 }
 
 .input-wrapper {
@@ -351,7 +361,7 @@
 .doubt-input:focus {
   outline: none;
   border-color: #0ea5a4;
-  box-shadow: 0 0 0 3px rgba(14,165,164,0.08);
+  box-shadow: 0 0 0 3px rgba(14, 165, 164, 0.08);
 }
 
 .doubt-input:disabled {

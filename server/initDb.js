@@ -28,6 +28,15 @@ const createTables = () => {
       course TEXT,
       department TEXT,
       year TEXT,
+      photo_url TEXT,
+      address TEXT,
+      dob TEXT,
+      blood_group TEXT,
+      gender TEXT,
+      father_name TEXT,
+      mother_name TEXT,
+      mobile TEXT,
+      parent_mobile TEXT,
       FOREIGN KEY(user_id) REFERENCES users(id)
     )`);
 
@@ -149,6 +158,20 @@ const createTables = () => {
       remarks TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY(student_id) REFERENCES students(id)
+    )`);
+
+    // Student Permissions Table
+    db.run(`CREATE TABLE IF NOT EXISTS student_permissions (
+      student_id INTEGER PRIMARY KEY,
+      permissions TEXT DEFAULT '{}',
+      FOREIGN KEY(student_id) REFERENCES users(id)
+    )`);
+
+    // Teacher Permissions Table
+    db.run(`CREATE TABLE IF NOT EXISTS teacher_permissions (
+      teacher_id INTEGER PRIMARY KEY,
+      permissions TEXT DEFAULT '{}',
+      FOREIGN KEY(teacher_id) REFERENCES users(id)
     )`);
 
     console.log('Tables created.');

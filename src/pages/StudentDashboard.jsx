@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { getStudents, getAttendance, getFees } from '../services/api';
-import { User, Calendar, BookOpen, Clock, Award } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { getStudents, getAttendance, getFees, getNotifications } from '../services/api';
+import { User, Calendar, BookOpen, Clock, Award, Bell } from 'lucide-react';
 import './StudentDashboard.css';
 
 const StudentDashboard = () => {
     const { user } = useAuth();
     const [studentProfile, setStudentProfile] = useState(null);
+    const navigate = useNavigate();
     const [attendanceStats, setAttendanceStats] = useState({ present: 0, absent: 0, total: 0 });
     const [pendingFees, setPendingFees] = useState(0);
+    const [unreadNotifications, setUnreadNotifications] = useState(0);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -44,6 +47,11 @@ const StudentDashboard = () => {
                 const myFees = feesData.filter(f => f.student_id === myProfile.id && f.status === 'Pending');
                 const totalPending = myFees.reduce((sum, fee) => sum + fee.amount, 0);
                 setPendingFees(totalPending);
+
+                // Fetch Notifications count
+                const notifData = await getNotifications();
+                const myUnread = notifData.filter(n => !n.is_read).length;
+                setUnreadNotifications(myUnread);
             }
         } catch (error) {
             console.error("Error loading student data", error);
@@ -87,6 +95,17 @@ const StudentDashboard = () => {
                     </div>
                 </div>
 
+                <div className="stat-card notifications-card" onClick={() => navigate('/notifications')} style={{ cursor: 'pointer' }}>
+                    <div className="stat-icon">
+                        <Bell size={24} />
+                    </div>
+                    <div className="stat-info">
+                        <h3>Notifications</h3>
+                        <div className="amount">{unreadNotifications}</div>
+                        <p>{unreadNotifications > 0 ? 'Unread' : 'No new'}</p>
+                    </div>
+                </div>
+
                 <div className="stat-card assignments-card">
                     <div className="stat-icon">
                         <BookOpen size={24} />
@@ -109,6 +128,15 @@ const StudentDashboard = () => {
                         <div className="day">Tue</div>
                         <div className="subject">CS</div>
                         <div className="subject">Eng</div>
+                    </div>
+                </div>
+
+                {/* roadmap section added per user request */}
+                <div className="section roadmap">
+                    <h2>Roadmap</h2>
+                    <div className="roadmap-content">
+                        <p>This feature is not yet available.</p>
+                        <p className="coming-soon">Coming soon &#x1F4C5;</p>
                     </div>
                 </div>
             </div>

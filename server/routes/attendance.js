@@ -16,16 +16,50 @@ router.get('/', authenticateToken, (req, res) => {
 router.post('/', authenticateToken, (req, res) => {
     const { date, records } = req.body;
 
-    db.serialize(() => {
-        db.run("DELETE FROM attendance WHERE date = ?", date, (err) => {
-            if (err) return res.status(500).json({ error: err.message });
+    if (!date || !records || records.length === 0) {
+        return res.status(400).json({ error: 'Date and records are required' });
+    }
 
+    db.serialize(() => {
+        db.run("BEGIN TRANSACTION");
+        
+        // First delete old records for the date
+        db.run("DELETE FROM attendance WHERE date = ?", [date], (err) => {
+            if (err) {
+                db.run("ROLLBACK");
+                return res.status(500).json({ error: 'Failed to clear old attendance: ' + err.message });
+            }
+
+            // Then insert new records
             const stmt = db.prepare("INSERT INTO attendance (student_id, date, status) VALUES (?, ?, ?)");
+            let hasError = false;
+            
             records.forEach(r => {
-                stmt.run(r.studentId, date, r.status);
+                if (!hasError && r.studentId && r.status) {
+                    stmt.run(r.studentId, date, r.status, (err) => {
+                        if (err && !hasError) {
+                            hasError = true;
+                            db.run("ROLLBACK");
+                            return res.status(500).json({ error: 'Failed to insert attendance: ' + err.message });
+                        }
+                    });
+                }
             });
-            stmt.finalize();
-            res.json({ message: 'Attendance saved' });
+            
+            stmt.finalize((err) => {
+                if (err || hasError) {
+                    db.run("ROLLBACK");
+                    return res.status(500).json({ error: 'Failed to finalize: ' + (err?.message || 'Unknown error') });
+                }
+                
+                db.run("COMMIT", (err) => {
+                    if (err) {
+                        db.run("ROLLBACK");
+                        return res.status(500).json({ error: 'Failed to commit: ' + err.message });
+                    }
+                    res.json({ message: 'Attendance saved successfully' });
+                });
+            });
         });
     });
 });

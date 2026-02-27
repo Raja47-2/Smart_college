@@ -111,9 +111,11 @@ const FacultyForm = () => {
                             >
                                 <option value="">Select Department</option>
                                 <option value="Computer Science">Computer Science</option>
+                                <option value="Electronic & Communication">Electronic & Communication</option>
                                 <option value="Mechanical">Mechanical</option>
-                                <option value="Electrical">Electrical</option>
                                 <option value="Civil">Civil</option>
+                                <option value="Electrical">Electrical</option>
+                                <option value="Information Technology">Information Technology</option>
                             </select>
                         </div>
 

@@ -102,11 +102,11 @@ const About = () => {
                 ))}
             </div>
 
-            <div className="define-x-branding">
-                <img src="/DefenX.png" alt="Define-X Logo" className="define-x-logo" />
+            <div className="Defen-x-branding">
+                <img src="/DefenX.png" alt="Defen-X Logo" className="defen-x-logo" />
                 <div className="branding-text">
                     <span>Powered by</span>
-                    <span className="brand-name">Define-X</span>
+                    <span className="brand-name">Defen-X</span>
                 </div>
             </div>
         </div>
